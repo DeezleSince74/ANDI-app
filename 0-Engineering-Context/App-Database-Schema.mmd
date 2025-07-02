@@ -1,0 +1,465 @@
+erDiagram
+    %% Core User Management
+    USERS {
+        string id PK
+        string email UK
+        string password_hash
+        string full_name
+        enum role "teacher, coach, admin"
+        string avatar_url
+        boolean is_active
+        boolean email_verified
+        datetime last_login_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    PASSWORD_RESET_TOKENS {
+        string id PK
+        string user_id FK
+        string token_hash
+        datetime expires_at
+        datetime used_at
+        datetime created_at
+    }
+
+    %% Organizational Structure
+    DISTRICTS {
+        string id PK
+        string name
+        string state
+        string contact_email
+        datetime created_at
+        datetime updated_at
+    }
+
+    SCHOOLS {
+        string id PK
+        string name
+        string district_id FK "nullable for private/charter schools"
+        enum school_type "public, private, charter, magnet, independent"
+        string address
+        string phone
+        string contact_email
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% User Profiles
+    TEACHER_PROFILES {
+        string user_id PK,FK
+        string school_id FK
+        array grades_taught
+        array subjects_taught
+        integer years_experience
+        array teaching_styles
+        array personal_interests
+        array strengths
+        string voice_sample_url
+        boolean onboarding_completed
+        json preferences
+        datetime created_at
+        datetime updated_at
+    }
+
+    COACH_PROFILES {
+        string user_id PK,FK
+        string school_id FK
+        string district_id FK "nullable for private/charter school coaches"
+        array specializations
+        integer years_coaching
+        datetime created_at
+        datetime updated_at
+    }
+
+    COACH_TEACHER_ASSIGNMENTS {
+        string id PK
+        string coach_id FK
+        string teacher_id FK
+        datetime assigned_at
+        boolean is_active
+        text notes
+    }
+
+    %% Goals and Development
+    TEACHER_GOALS {
+        string id PK
+        string teacher_id FK
+        enum category "equity, creativity, innovation, engagement, general"
+        string title
+        text description
+        enum status "active, completed, paused, archived"
+        datetime target_date
+        json success_criteria
+        float progress_percentage
+        datetime created_at
+        datetime updated_at
+    }
+
+    GOAL_PROGRESS_LOGS {
+        string id PK
+        string goal_id FK
+        string session_id FK
+        text notes
+        float progress_increment
+        json metrics_snapshot
+        datetime logged_at
+        datetime created_at
+    }
+
+    %% Audio Processing & Sessions
+    AUDIO_SESSIONS {
+        string id PK
+        string teacher_id FK
+        string title
+        datetime session_date
+        integer duration_seconds
+        enum status "uploading, processing, completed, failed"
+        enum source "recorded, uploaded"
+        string audio_file_url
+        text transcript
+        json metadata
+        text session_notes
+        datetime created_at
+        datetime updated_at
+    }
+
+    AUDIO_UPLOADS {
+        string id PK
+        string session_id FK
+        string original_filename
+        integer file_size_bytes
+        string mime_type
+        enum upload_status "pending, processing, completed, failed"
+        float progress_percentage
+        string error_message
+        datetime upload_started_at
+        datetime upload_completed_at
+        datetime created_at
+    }
+
+    KEY_MOMENTS {
+        string id PK
+        string session_id FK
+        string title
+        text description
+        integer start_time_seconds
+        integer end_time_seconds
+        string audio_clip_url
+        enum moment_type "strength, opportunity, highlight"
+        json tags
+        datetime created_at
+    }
+
+    %% CIQ Analytics & Performance
+    CIQ_METRICS {
+        string id PK
+        string session_id FK
+        string teacher_id FK
+        float equity_score
+        float creativity_score
+        float innovation_score
+        float overall_score
+        enum framework_type "eci, danielson"
+        json equity_details
+        json creativity_details
+        json innovation_details
+        float talk_time_ratio
+        json question_metrics
+        json radar_data
+        datetime calculated_at
+        datetime created_at
+    }
+
+    TEACHER_PERFORMANCE_SUMMARY {
+        string id PK
+        string teacher_id FK
+        datetime period_start
+        datetime period_end
+        integer total_sessions
+        float total_duration_hours
+        integer sessions_this_week
+        integer sessions_last_week
+        enum performance_status "improving, stable, needs_attention, classroom_maestro"
+        string performance_title
+        float avg_equity_score
+        float avg_creativity_score
+        float avg_innovation_score
+        float avg_overall_score
+        enum equity_trend "up, down, stable"
+        enum creativity_trend "up, down, stable"
+        enum innovation_trend "up, down, stable"
+        json weekly_trends
+        json radar_performance_data
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% AI Recommendations & Teaching Strategies
+    RECOMMENDATIONS {
+        string id PK
+        string teacher_id FK
+        string session_id FK
+        enum category "equity, creativity, innovation, general"
+        string title
+        text strategy
+        text activity
+        text prompt
+        enum priority "high, medium, low"
+        boolean is_read
+        boolean is_implemented
+        boolean is_liked
+        json implementation_feedback
+        datetime created_at
+        datetime updated_at
+    }
+
+    CLASSROOM_ACTIVITIES {
+        string id PK
+        string title
+        text description
+        text instructions
+        string image_url
+        enum category "engagement, collaboration, creativity, assessment, mind_mapping"
+        array grade_levels
+        array subjects
+        integer duration_minutes
+        enum difficulty "beginner, intermediate, advanced"
+        integer likes_count
+        integer dislikes_count
+        array tags
+        string created_by FK
+        boolean is_featured
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% Resources & Content Library
+    RESOURCES {
+        string id PK
+        string title
+        text description
+        string image_url
+        string resource_url
+        string source
+        enum resource_type "article, video, worksheet, tool, workshop, course"
+        enum category "student_engagement, diversity_inclusion, technology_integration, workshops, all"
+        integer likes_count
+        integer views_count
+        array tags
+        array grade_levels
+        array subjects
+        boolean is_featured
+        string created_by FK
+        datetime created_at
+        datetime updated_at
+    }
+
+    RESOURCE_INTERACTIONS {
+        string id PK
+        string user_id FK
+        string resource_id FK
+        enum interaction_type "view, like, bookmark, share"
+        datetime created_at
+    }
+
+    %% Teacher Lounge Community Forum
+    FORUM_QUESTIONS {
+        string id PK
+        string author_id FK
+        string title
+        text content
+        array tags
+        integer upvotes_count
+        integer answers_count
+        boolean is_answered
+        boolean is_featured
+        enum status "unanswered, answered, popular, bookmarked"
+        datetime created_at
+        datetime updated_at
+    }
+
+    FORUM_ANSWERS {
+        string id PK
+        string question_id FK
+        string author_id FK
+        text content
+        integer upvotes_count
+        boolean is_accepted
+        boolean is_top_response
+        datetime created_at
+        datetime updated_at
+    }
+
+    FORUM_VOTES {
+        string id PK
+        string user_id FK
+        string target_id FK
+        enum target_type "question, answer"
+        enum vote_type "upvote, downvote"
+        datetime created_at
+    }
+
+    FORUM_BOOKMARKS {
+        string id PK
+        string user_id FK
+        string question_id FK
+        datetime created_at
+    }
+
+    %% Gamification & Achievements
+    ACHIEVEMENTS {
+        string id PK
+        string name
+        text description
+        string icon_url
+        enum achievement_type "practice_prodigy, consistency, engagement, community, milestone"
+        json criteria
+        integer points_value
+        integer progress_total
+        boolean is_active
+        datetime created_at
+    }
+
+    USER_ACHIEVEMENTS {
+        string id PK
+        string user_id FK
+        string achievement_id FK
+        integer progress_current
+        integer progress_total
+        boolean is_completed
+        datetime completed_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    TRIVIA_QUESTIONS {
+        string id PK
+        string question_text
+        array answer_options
+        integer correct_answer_index
+        text explanation
+        enum category "teaching_techniques, student_engagement, classroom_management, wait_time"
+        enum difficulty "easy, medium, hard"
+        boolean is_active
+        datetime created_at
+    }
+
+    USER_TRIVIA_RESPONSES {
+        string id PK
+        string user_id FK
+        string question_id FK
+        integer selected_answer
+        boolean is_correct
+        datetime answered_at
+    }
+
+    %% Communication & Collaboration
+    CONVERSATIONS {
+        string id PK
+        string teacher_id FK
+        string coach_id FK
+        string session_id FK
+        text message
+        enum sender_type "teacher, coach"
+        string sender_id FK
+        boolean is_read
+        string reply_to_id FK
+        datetime created_at
+        datetime updated_at
+    }
+
+    NOTIFICATIONS {
+        string id PK
+        string user_id FK
+        enum type "session_processed, recommendation_ready, achievement_unlocked, forum_answer, report_ready"
+        string title
+        text message
+        json data
+        boolean is_read
+        string action_url
+        datetime created_at
+    }
+
+    %% Reports & Analytics
+    REPORTS {
+        string id PK
+        string generated_by FK
+        string teacher_id FK
+        enum report_type "weekly_summary, monthly_analysis, goal_progress, comparative"
+        string title
+        datetime date_range_start
+        datetime date_range_end
+        json data
+        enum status "generating, completed, failed"
+        boolean is_tagged
+        boolean is_reviewed
+        string reviewed_by FK
+        datetime reviewed_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% Relationships - Core User Management
+    USERS ||--o| TEACHER_PROFILES : "has teacher profile"
+    USERS ||--o| COACH_PROFILES : "has coach profile"
+    USERS ||--o{ PASSWORD_RESET_TOKENS : "can request password reset"
+    USERS ||--o{ NOTIFICATIONS : "receives notifications"
+
+    %% Relationships - Organizational
+    DISTRICTS ||--o{ SCHOOLS : "optionally contains schools"
+    SCHOOLS ||--o{ TEACHER_PROFILES : "employs teachers"
+    SCHOOLS ||--o{ COACH_PROFILES : "employs coaches"
+
+    %% Relationships - Coaching
+    TEACHER_PROFILES ||--o{ COACH_TEACHER_ASSIGNMENTS : "assigned to coaches"
+    COACH_PROFILES ||--o{ COACH_TEACHER_ASSIGNMENTS : "coaches teachers"
+
+    %% Relationships - Goals & Development
+    USERS ||--o{ TEACHER_GOALS : "sets and manages goals"
+    TEACHER_GOALS ||--o{ GOAL_PROGRESS_LOGS : "tracks progress"
+
+    %% Relationships - Audio & Sessions
+    USERS ||--o{ AUDIO_SESSIONS : "creates sessions"
+    AUDIO_SESSIONS ||--o| AUDIO_UPLOADS : "has upload details"
+    AUDIO_SESSIONS ||--o{ KEY_MOMENTS : "contains key moments"
+    AUDIO_SESSIONS ||--o| CIQ_METRICS : "analyzed for CIQ metrics"
+    AUDIO_SESSIONS ||--o{ GOAL_PROGRESS_LOGS : "contributes to goal progress"
+
+    %% Relationships - Performance & Analytics
+    USERS ||--o{ TEACHER_PERFORMANCE_SUMMARY : "has performance summaries"
+    USERS ||--o{ CIQ_METRICS : "has CIQ metrics"
+
+    %% Relationships - Recommendations & Activities
+    USERS ||--o{ RECOMMENDATIONS : "receives recommendations"
+    AUDIO_SESSIONS ||--o{ RECOMMENDATIONS : "generates recommendations"
+    USERS ||--o{ CLASSROOM_ACTIVITIES : "creates activities"
+
+    %% Relationships - Resources
+    USERS ||--o{ RESOURCES : "creates resources"
+    USERS ||--o{ RESOURCE_INTERACTIONS : "interacts with resources"
+    RESOURCES ||--o{ RESOURCE_INTERACTIONS : "has user interactions"
+
+    %% Relationships - Community Forum
+    USERS ||--o{ FORUM_QUESTIONS : "asks questions"
+    USERS ||--o{ FORUM_ANSWERS : "provides answers"
+    USERS ||--o{ FORUM_VOTES : "votes on content"
+    USERS ||--o{ FORUM_BOOKMARKS : "bookmarks questions"
+    FORUM_QUESTIONS ||--o{ FORUM_ANSWERS : "has answers"
+    FORUM_QUESTIONS ||--o{ FORUM_VOTES : "receives votes"
+    FORUM_QUESTIONS ||--o{ FORUM_BOOKMARKS : "bookmarked by users"
+    FORUM_ANSWERS ||--o{ FORUM_VOTES : "receives votes"
+
+    %% Relationships - Gamification
+    ACHIEVEMENTS ||--o{ USER_ACHIEVEMENTS : "earned by users"
+    USERS ||--o{ USER_ACHIEVEMENTS : "earns achievements"
+    TRIVIA_QUESTIONS ||--o{ USER_TRIVIA_RESPONSES : "answered by users"
+    USERS ||--o{ USER_TRIVIA_RESPONSES : "answers trivia"
+
+    %% Relationships - Communication
+    USERS ||--o{ CONVERSATIONS : "participates in conversations"
+    AUDIO_SESSIONS ||--o{ CONVERSATIONS : "discussed in conversations"
+    CONVERSATIONS ||--o{ CONVERSATIONS : "replies to messages"
+
+    %% Relationships - Reports
+    USERS ||--o{ REPORTS : "generates and reviews reports"

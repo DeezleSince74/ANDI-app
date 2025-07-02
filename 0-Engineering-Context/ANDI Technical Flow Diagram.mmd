@@ -1,0 +1,47 @@
+flowchart TD
+    TR["Classroom Recording (Browser-based Audio Recording)"] --> NEXT["Next.js Frontend"]
+    NEXT --> AP["Audio Processing"]
+    AP --> STT["Speech-to-Text"]
+    STT --> NLP["NLP Analysis"]
+    NLP --> CIQ["CIQ Calculator"] & QA["Question Analyzer"] & TC["Talk Time Calculator"]
+    CIQ --> SBP["Core ANDI Processing Engine"] & DW[("Application Database (Postgres)")]
+    QA --> SBP & DW
+    TC --> SBP & DW
+    SBP --> RAG["RAG System"]
+    RAG --> REC["Recommendation Engine"]
+    REC --> SNAP["Snapshot Generator"] & DW
+    SNAP --> DW
+    AP -.-> ASSEMBLY["Assembly AI"]
+    RAG -.-> LLM["LLM APIs<br>OpenAI/Anthropic/Gemini"]
+    NEXT -.-> AUTH["Authentication<br>AuthJS"]
+    DW -.-> STORAGE["Cloud Storage (media file storage)"]
+    n1[("Data warehouse (Clickhouse)")] <--> DW
+    DW --> n2["Teacher, Administrative, and Instructional Coach Dashboards (Next.js Frontend)"]
+    n1 --> n2
+
+     TR:::input
+     NEXT:::input
+     AP:::processing
+     STT:::processing
+     NLP:::processing
+     CIQ:::ai
+     QA:::ai
+     TC:::ai
+     SBP:::ai
+     DW:::storage
+     RAG:::ai
+     REC:::ai
+     SNAP:::ai
+     ASSEMBLY:::external
+     LLM:::external
+     AUTH:::external
+     STORAGE:::external
+     n1:::storage
+    classDef input fill:#e1f5fe
+    classDef processing fill:#f3e5f5
+    classDef ai fill:#e8f5e8
+    classDef storage fill:#fff3e0
+    classDef external fill:#fce4ec
+    classDef output fill:#f1f8e9
+
+
