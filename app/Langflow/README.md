@@ -33,7 +33,7 @@ Langflow/
 
 ## Integration Points
 
-- **Input**: Audio files from Firebase Storage
+- **Input**: Audio files from cloud storage (S3/GCS)
 - **Processing**: LLM chains for analysis
 - **Output**: Structured data to ClickHouse
 - **Vector Store**: Embeddings for semantic search

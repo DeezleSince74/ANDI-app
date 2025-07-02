@@ -1,11 +1,12 @@
-# Web App - ANDI React Native Application
+# Web App - ANDI Next.js Application
 
-This directory contains the React Native mobile application for ANDI.
+This directory contains the Next.js web application for ANDI.
 
 ## Overview
 
-The ANDI mobile app provides:
-- Cross-platform support (iOS & Android)
+The ANDI web app provides:
+- Server-side rendering for optimal performance
+- Responsive design for all devices
 - Audio recording and management
 - AI-powered insights and coaching
 - Community features
@@ -15,28 +16,28 @@ The ANDI mobile app provides:
 
 ```
 web-app/
-├── src/               # Source code
+├── app/               # Next.js 13+ app directory
 │   ├── components/    # Reusable components
-│   ├── screens/       # Screen components
-│   ├── navigation/    # Navigation setup
-│   ├── services/      # API services
-│   ├── store/         # State management
-│   └── utils/         # Utility functions
-├── assets/            # Images, fonts, etc.
-├── ios/               # iOS-specific code
-├── android/           # Android-specific code
-└── __tests__/         # Test files
+│   ├── api/          # API routes
+│   └── (routes)/     # Page routes
+├── components/        # Shared components
+├── lib/              # Utility functions
+├── hooks/            # Custom React hooks
+├── services/         # API services
+├── store/            # State management
+├── public/           # Static assets
+└── styles/           # Global styles
 ```
 
 ## Tech Stack
 
-- **Framework**: React Native + TypeScript
-- **Navigation**: React Navigation
-- **State**: Redux Toolkit / Context API
-- **UI**: Custom components + React Native Elements
-- **Audio**: React Native Audio Recorder
-- **Backend**: Firebase SDK
-- **Analytics**: Firebase Analytics
+- **Framework**: Next.js 14 + TypeScript
+- **Styling**: Tailwind CSS
+- **State**: Zustand / Context API
+- **UI**: Custom components + Radix UI
+- **Audio**: Web Audio API
+- **Database**: PostgreSQL / Supabase
+- **Analytics**: Custom analytics to ClickHouse
 
 ## Key Features
 
@@ -46,9 +47,9 @@ web-app/
    - Profile management
 
 2. **Recording System**
-   - Audio capture
+   - Browser-based audio capture
    - Session management
-   - Upload to cloud
+   - Cloud storage integration
 
 3. **Insights Dashboard**
    - AI-generated summaries
@@ -66,14 +67,14 @@ web-app/
 # Install dependencies
 npm install
 
-# iOS setup
-cd ios && pod install
+# Run development server
+npm run dev
 
-# Run on iOS
-npm run ios
+# Build for production
+npm run build
 
-# Run on Android
-npm run android
+# Start production server
+npm start
 
 # Run tests
 npm test

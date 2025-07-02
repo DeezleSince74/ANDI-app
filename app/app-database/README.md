@@ -1,50 +1,54 @@
-# App Database - Firebase Configuration
+# App Database - PostgreSQL/Supabase Configuration
 
-This directory contains Firebase configuration and database schemas for ANDI's real-time data needs.
+This directory contains database schemas and configurations for ANDI's operational data needs.
 
 ## Overview
 
-Firebase provides the operational database layer for:
+The database provides the operational layer for:
 - User authentication and profiles
-- Real-time session management
+- Session management
 - Community features (posts, comments)
-- File storage for audio recordings
+- Audio recording metadata
+- Real-time subscriptions
 
 ## Structure
 
 ```
 app-database/
-├── schema/            # Firestore data models
-├── rules/             # Security rules
-├── functions/         # Cloud Functions
-├── migrations/        # Schema migrations
+├── schema/            # Database schema definitions
+├── migrations/        # Database migrations
+├── functions/         # Stored procedures
+├── triggers/          # Database triggers
+├── policies/          # Row-level security policies
 └── seeds/            # Test data seeds
 ```
 
-## Collections
+## Tables
 
-### Core Collections
+### Core Tables
 - `users` - Teacher profiles and preferences
 - `schools` - School information
 - `sessions` - Recording sessions
 - `insights` - Generated insights
 - `resources` - Educational resources
-- `community` - Teacher Lounge posts
+- `community_posts` - Teacher Lounge posts
 
-### Supporting Collections
-- `audio_files` - Recording metadata
-- `notifications` - Push notifications
-- `analytics_events` - User events
+### Supporting Tables
+- `audio_files` - Recording metadata and URLs
+- `notifications` - User notifications
+- `analytics_events` - User activity tracking
+- `user_preferences` - User settings
 
 ## Security
 
-- Row-level security for user data
-- Role-based access (teacher, coach, admin)
-- Encrypted sensitive information
+- Row-level security (RLS) policies
+- Role-based access control (teacher, coach, admin)
+- Encrypted sensitive data
+- API key management
 
 ## Integration
 
-- **Storage**: Audio files in Firebase Storage
-- **Auth**: Firebase Authentication
-- **Functions**: Background processing
-- **Analytics**: Event tracking
+- **Storage**: Audio files in cloud storage (S3/GCS)
+- **Auth**: Supabase Auth / NextAuth.js
+- **Real-time**: Supabase real-time subscriptions
+- **Analytics**: Events pipeline to ClickHouse

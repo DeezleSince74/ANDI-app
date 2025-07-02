@@ -41,7 +41,7 @@ data-warehouse/
 
 ## ETL Pipeline
 
-1. **Extract**: From Firebase via Cloud Functions
+1. **Extract**: From PostgreSQL/Supabase via scheduled jobs
 2. **Transform**: Normalize and enrich data
 3. **Load**: Batch insert to ClickHouse
 
