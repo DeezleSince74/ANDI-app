@@ -157,23 +157,35 @@ stop_database() {
     cd "$SCRIPT_DIR"
 }
 
-# Function to stop web application (placeholder)
+# Function to stop web application
 stop_web_app() {
     log "🌐 Stopping Next.js web application..."
     
     stop_process "web-app"
     
-    # TODO: Add web app specific cleanup when implemented
     # Kill any Node.js processes on the web app port
     local web_port="${ANDI_PORT:-3000}"
     local pid=$(lsof -ti:$web_port 2>/dev/null | head -n1)
     
     if [[ -n "$pid" ]]; then
-        log "Found process on port $web_port (PID: $pid)"
+        log "Found web app process on port $web_port (PID: $pid)"
         if [[ "$FORCE_STOP" == "true" ]]; then
             kill -KILL "$pid" 2>/dev/null || true
         else
             kill -TERM "$pid" 2>/dev/null || true
+            
+            # Wait for graceful shutdown
+            local retries=10
+            while kill -0 "$pid" 2>/dev/null && [[ $retries -gt 0 ]]; do
+                sleep 1
+                ((retries--))
+            done
+            
+            # Force kill if still running
+            if kill -0 "$pid" 2>/dev/null; then
+                warning "Graceful shutdown timeout, force killing web app"
+                kill -KILL "$pid" 2>/dev/null || true
+            fi
         fi
         success "Web application stopped"
     else

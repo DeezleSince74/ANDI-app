@@ -72,7 +72,7 @@ Services:
     database                PostgreSQL database and PgAdmin
     data-warehouse          ClickHouse data warehouse with Grafana & Prometheus
     data-pipelines          Airflow ETL orchestration with monitoring
-    web-app                 Next.js web application (placeholder)
+    web-app                 Next.js web application with Auth.js
     api                     API services (placeholder)
     langflow                Langflow AI workflow engine (placeholder)
     all                     Start all services
@@ -246,28 +246,57 @@ start_database() {
     cd "$SCRIPT_DIR"
 }
 
-# Function to start web application (placeholder)
+# Function to start web application
 start_web_app() {
     log "🌐 Starting Next.js web application..."
     
-    # TODO: Implement when web-app is created
-    warning "Web application not yet implemented"
-    info "Placeholder: Will start Next.js app on port ${ANDI_PORT:-3000}"
+    cd "$SCRIPT_DIR/app/web-app"
     
-    # Placeholder implementation:
-    # cd "$SCRIPT_DIR/app/web-app"
-    # if [[ ! -f ".env.local" ]]; then
-    #     cp .env.example .env.local
-    # fi
-    # 
-    # if [[ "$DETACHED" == "true" ]]; then
-    #     npm run dev > "$LOG_DIR/web-app.log" 2>&1 &
-    #     echo $! > "$PID_DIR/web-app.pid"
-    # else
-    #     npm run dev
-    # fi
+    # Check if .env.local exists
+    if [[ ! -f ".env.local" ]]; then
+        warning "Web app .env.local file not found, copying from .env.example"
+        if [[ -f ".env.example" ]]; then
+            cp .env.example .env.local
+        fi
+        warning "Please review and update app/web-app/.env.local with your configuration"
+    fi
     
-    success "Web application placeholder completed"
+    # Check if node_modules exists
+    if [[ ! -d "node_modules" ]]; then
+        log "Installing web app dependencies..."
+        npm install
+    fi
+    
+    # Start web application
+    if [[ "$DETACHED" == "true" ]]; then
+        npm run dev > "$LOG_DIR/web-app.log" 2>&1 &
+        echo $! > "$PID_DIR/web-app.pid"
+    else
+        npm run dev
+    fi
+    
+    # Health check
+    if [[ "$SKIP_HEALTH_CHECK" != "true" ]]; then
+        log "⏳ Waiting for web app to be ready..."
+        sleep 10
+        
+        local retries=30
+        while ! curl -s http://localhost:${ANDI_PORT:-3000} > /dev/null 2>&1 && [[ $retries -gt 0 ]]; do
+            sleep 2
+            ((retries--))
+        done
+        
+        if [[ $retries -eq 0 ]]; then
+            error "Web application failed to start within timeout"
+            return 1
+        fi
+    fi
+    
+    success "Web application started successfully"
+    info "Web App: http://localhost:${ANDI_PORT:-3000}"
+    info "Built with Next.js 15 + Auth.js + TypeScript"
+    
+    cd "$SCRIPT_DIR"
 }
 
 # Function to start API services (placeholder)
@@ -492,6 +521,13 @@ else
     warning "Langflow: Not running"
 fi
 
+# Web app status
+if lsof -ti:${ANDI_PORT:-3000} >/dev/null 2>&1; then
+    success "Web App: Running (Next.js 15 + Auth.js)"
+else
+    warning "Web App: Not running"
+fi
+
 echo "─────────────────────────────────────"
 
 # Show access URLs
@@ -506,7 +542,7 @@ echo "   Data Pipelines:"
 echo "     - Airflow UI:         http://localhost:8080 (admin/admin)"
 echo "   Langflow AI Workflows:"
 echo "     - Langflow IDE:       http://localhost:7860 (admin@andi.local/langflow_admin)"
-echo "   Web App:               http://localhost:${ANDI_PORT:-3000} (coming soon)"
+echo "   Web App:               http://localhost:${ANDI_PORT:-3000} (Next.js 15 + Auth.js)"
 echo "   API Docs:              http://localhost:${API_PORT:-3001}/docs (coming soon)"
 
 # Show logs if requested
@@ -529,6 +565,9 @@ echo "   Pipeline health:       cd app/data-pipelines && make health"
 echo "   Pipeline logs:         cd app/data-pipelines && make logs"
 echo "   Langflow IDE:          cd app/langflow && make dev"
 echo "   Langflow health:       cd app/langflow && make health"
+echo "   Web app dev:           cd app/web-app && npm run dev"
+echo "   Web app build:         cd app/web-app && npm run build"
+echo "   Database studio:       cd app/web-app && npm run db:studio"
 echo "   Test Sentry:           node scripts/test-sentry.js"
 
 echo
