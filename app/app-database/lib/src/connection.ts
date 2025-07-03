@@ -2,6 +2,7 @@ import { Pool, PoolClient, PoolConfig } from 'pg';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import * as schema from './schema';
+import { initializeSentry, withDatabaseContext, trackDatabaseMetrics, sentryLogger } from './sentry';
 
 /**
  * Type-safe database connection management for ANDI
@@ -41,28 +42,44 @@ class DatabaseConnection {
    * Initialize database connection pool with Drizzle ORM
    */
   async initialize(): Promise<AndiDatabase> {
-    try {
+    // Initialize Sentry first
+    initializeSentry();
+    
+    return withDatabaseContext('initialize', {}, async () => {
       const config = this.getConnectionConfig();
       
       this.pool = new Pool(config);
       this.db = drizzle(this.pool, { schema });
 
       // Test the connection
+      const startTime = Date.now();
       const client = await this.pool.connect();
       await client.query('SELECT 1');
       client.release();
+      
+      const duration = Date.now() - startTime;
+      trackDatabaseMetrics('connection_test', duration, { config_host: config.host });
 
       this.isConnected = true;
-      console.log('✓ Database connection established successfully');
+      sentryLogger.info('Database connection established successfully', {
+        host: config.host,
+        database: config.database,
+        connection_time_ms: duration
+      });
       
       // Set up connection event handlers
       this.setupEventHandlers();
       
       return this.db;
-    } catch (error) {
-      console.error('✗ Failed to connect to database:', error instanceof Error ? error.message : error);
-      throw error;
-    }
+    });
+  }
+
+  private handleConnectionError(error: Error): never {
+    sentryLogger.error('Failed to connect to database', error, {
+      host: process.env.POSTGRES_HOST,
+      database: process.env.POSTGRES_DB
+    });
+    throw error;
   }
 
   /**

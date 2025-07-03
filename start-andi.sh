@@ -478,6 +478,7 @@ echo "   Warehouse setup:       cd app/data-warehouse && make setup"
 echo "   Warehouse queries:     cd app/data-warehouse && make sample-analytics"
 echo "   Pipeline health:       cd app/data-pipelines && make health"
 echo "   Pipeline logs:         cd app/data-pipelines && make logs"
+echo "   Test Sentry:           node scripts/test-sentry.js"
 
 echo
 success "🚀 ANDI application startup completed!"

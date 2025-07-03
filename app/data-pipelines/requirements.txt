@@ -17,6 +17,7 @@ python-dotenv==1.0.0
 
 # Monitoring and alerting
 prometheus-client==0.19.0
+sentry-sdk[flask,sqlalchemy]==1.39.2
 
 # Development and testing
 pytest==7.4.4
