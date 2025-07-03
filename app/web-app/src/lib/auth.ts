@@ -2,6 +2,7 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { type NextAuthConfig } from "next-auth";
 import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
+import AzureADProvider from "next-auth/providers/azure-ad";
 
 import { db } from "~/server/db";
 import {
@@ -19,6 +20,16 @@ export const authConfig = {
     verificationTokensTable: verificationTokens,
   }),
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
+    }),
+    AzureADProvider({
+      clientId: process.env.AZURE_AD_CLIENT_ID!,
+      clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
+    }),
     EmailProvider({
       server: {
         host: process.env.EMAIL_SERVER_HOST,
@@ -29,11 +40,6 @@ export const authConfig = {
         },
       },
       from: process.env.EMAIL_FROM ?? "noreply@andilabs.ai",
-    }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true,
     }),
   ],
   pages: {
