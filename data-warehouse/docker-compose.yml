@@ -1,0 +1,170 @@
+version: '3.8'
+
+services:
+  # ClickHouse Server
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.12
+    container_name: andi-clickhouse-warehouse
+    restart: unless-stopped
+    ports:
+      - "8123:8123"  # HTTP interface
+      - "9000:9000"  # Native TCP interface
+      - "9009:9009"  # HTTP interface for inter-server communication
+    environment:
+      CLICKHOUSE_DB: andi_warehouse
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ""
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - clickhouse-logs:/var/log/clickhouse-server
+      - ./clickhouse/schemas:/opt/schemas:ro
+      - ./clickhouse/init:/opt/init:ro
+      - ./clickhouse/queries:/opt/queries:ro
+      - ./monitoring/clickhouse-config.xml:/etc/clickhouse-server/config.d/custom.xml:ro
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - andi-warehouse
+
+  # Grafana for analytics dashboards
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: andi-grafana-warehouse
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clickhouse-datasource
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/andi-overview.json
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    networks:
+      - andi-warehouse
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    container_name: andi-prometheus-warehouse
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.size=50GB'
+    networks:
+      - andi-warehouse
+
+  # ClickHouse Exporter for Prometheus metrics
+  clickhouse-exporter:
+    image: vertamedia/clickhouse-grafana:latest
+    container_name: andi-clickhouse-exporter
+    restart: unless-stopped
+    ports:
+      - "9116:9116"
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ""
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    networks:
+      - andi-warehouse
+
+  # Optional: Redis for caching frequently accessed data
+  redis:
+    image: redis:7.2-alpine
+    container_name: andi-redis-warehouse
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - andi-warehouse
+
+  # Optional: Nginx for load balancing and caching
+  nginx:
+    image: nginx:alpine
+    container_name: andi-nginx-warehouse
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./monitoring/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./monitoring/nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - clickhouse
+      - grafana
+    networks:
+      - andi-warehouse
+
+  # Log aggregator for centralized logging
+  fluent-bit:
+    image: fluent/fluent-bit:latest
+    container_name: andi-fluent-bit
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - clickhouse-logs:/var/log/clickhouse-server:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    depends_on:
+      - clickhouse
+    networks:
+      - andi-warehouse
+
+volumes:
+  clickhouse-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/clickhouse
+  clickhouse-logs:
+    driver: local
+  grafana-storage:
+    driver: local
+  prometheus-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  andi-warehouse:
+    driver: bridge
+    name: andi-warehouse
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

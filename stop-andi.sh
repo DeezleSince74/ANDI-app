@@ -50,11 +50,11 @@ Options:
 
 Services:
     database                Stop PostgreSQL database and PgAdmin
+    data-warehouse          Stop ClickHouse data warehouse
+    data-pipelines          Stop Airflow ETL data pipelines
     web-app                 Stop Next.js web application
     api                     Stop API services
     langflow                Stop Langflow AI workflow engine
-    data-warehouse          Stop ClickHouse data warehouse
-    monitoring              Stop monitoring stack
     all                     Stop all services (default)
 
 Examples:
@@ -88,7 +88,7 @@ done
 
 # Handle 'all' service
 if [[ "$SERVICES" == *"all"* ]]; then
-    SERVICES="monitoring data-warehouse langflow api web-app database"
+    SERVICES="data-pipelines data-warehouse langflow api web-app database"
 fi
 
 log "🛑 Stopping ANDI application services..."
@@ -214,31 +214,57 @@ stop_langflow() {
     log "Langflow stop placeholder completed"
 }
 
-# Function to stop data warehouse (placeholder)
+# Function to stop data warehouse
 stop_data_warehouse() {
     log "📊 Stopping ClickHouse data warehouse..."
     
     stop_process "data-warehouse"
     
-    # TODO: Add ClickHouse specific cleanup when implemented
-    log "Data warehouse stop placeholder completed"
+    # Stop Docker containers
+    cd "$SCRIPT_DIR/data-warehouse"
+    
+    if docker-compose ps | grep -q "andi-clickhouse-warehouse\|andi-grafana-warehouse"; then
+        if [[ "$FORCE_STOP" == "true" ]]; then
+            docker-compose kill
+        else
+            docker-compose stop
+        fi
+        success "Data warehouse containers stopped"
+    else
+        log "Data warehouse containers not running"
+    fi
+    
+    cd "$SCRIPT_DIR"
 }
 
-# Function to stop monitoring (placeholder)
-stop_monitoring() {
-    log "📈 Stopping monitoring and logging stack..."
+# Function to stop data pipelines
+stop_data_pipelines() {
+    log "🔄 Stopping Airflow ETL data pipelines..."
     
-    stop_process "monitoring"
+    stop_process "data-pipelines"
     
-    # TODO: Add monitoring stack cleanup when implemented
-    log "Monitoring stop placeholder completed"
+    # Stop Docker containers
+    cd "$SCRIPT_DIR/data-pipelines"
+    
+    if docker-compose ps | grep -q "airflow-"; then
+        if [[ "$FORCE_STOP" == "true" ]]; then
+            docker-compose kill
+        else
+            docker-compose stop
+        fi
+        success "Data pipelines containers stopped"
+    else
+        log "Data pipelines containers not running"
+    fi
+    
+    cd "$SCRIPT_DIR"
 }
 
 # Stop services (in reverse order for dependencies)
 for service in $SERVICES; do
     case $service in
-        monitoring)
-            stop_monitoring
+        data-pipelines)
+            stop_data_pipelines
             ;;
         data-warehouse)
             stop_data_warehouse
@@ -257,7 +283,7 @@ for service in $SERVICES; do
             ;;
         *)
             error "Unknown service: $service"
-            warning "Available services: database, web-app, api, langflow, data-warehouse, monitoring, all"
+            warning "Available services: database, data-warehouse, data-pipelines, web-app, api, langflow, all"
             ;;
     esac
 done
@@ -294,7 +320,7 @@ else
 fi
 
 # Check for any remaining processes on known ports
-local ports=("${ANDI_PORT:-3000}" "${API_PORT:-3001}" "${POSTGRES_PORT:-5432}" "${PGADMIN_PORT:-5050}")
+local ports=("${ANDI_PORT:-3000}" "${API_PORT:-3001}" "${POSTGRES_PORT:-5432}" "${PGADMIN_PORT:-5050}" "8123" "8080" "9090")
 local running_ports=()
 
 for port in "${ports[@]}"; do

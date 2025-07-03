@@ -70,11 +70,11 @@ Options:
 
 Services:
     database                PostgreSQL database and PgAdmin
+    data-warehouse          ClickHouse data warehouse with Grafana & Prometheus
+    data-pipelines          Airflow ETL orchestration with monitoring
     web-app                 Next.js web application (placeholder)
     api                     API services (placeholder)
     langflow                Langflow AI workflow engine (placeholder)
-    data-warehouse          ClickHouse data warehouse (placeholder)
-    monitoring              Monitoring and logging stack (placeholder)
     all                     Start all services
 
 Examples:
@@ -154,7 +154,7 @@ SERVICES=$(echo "$SERVICES" | tr ',' ' ')
 
 # Handle 'all' service
 if [[ "$SERVICES" == *"all"* ]]; then
-    SERVICES="database web-app api langflow data-warehouse monitoring"
+    SERVICES="database data-warehouse data-pipelines web-app api langflow"
 fi
 
 # Clean start if requested
@@ -176,7 +176,8 @@ if [[ "$CLEAN_START" == "true" ]]; then
     
     # Clean Docker containers
     docker-compose -f app/app-database/docker-compose.yml down -v 2>/dev/null || true
-    # Add other docker-compose cleanups as services are added
+    docker-compose -f data-warehouse/docker-compose.yml down -v 2>/dev/null || true
+    docker-compose -f data-pipelines/docker-compose.yml down -v 2>/dev/null || true
     
     success "Cleanup completed"
 fi
@@ -290,26 +291,104 @@ start_langflow() {
     success "Langflow placeholder completed"
 }
 
-# Function to start data warehouse (placeholder)
+# Function to start data warehouse
 start_data_warehouse() {
     log "📊 Starting ClickHouse data warehouse..."
     
-    warning "Data warehouse not yet implemented"
-    info "Placeholder: Will start ClickHouse for analytics data"
+    cd "$SCRIPT_DIR/data-warehouse"
     
-    # TODO: Implement ClickHouse data warehouse
-    success "Data warehouse placeholder completed"
+    # Check if .env exists
+    if [[ ! -f ".env" ]]; then
+        warning "Data warehouse .env file not found, copying from .env.example"
+        if [[ -f ".env.example" ]]; then
+            cp .env.example .env
+        fi
+        warning "Please review and update data-warehouse/.env with your configuration"
+    fi
+    
+    # Start data warehouse services
+    if [[ "$DETACHED" == "true" ]]; then
+        make up > "$LOG_DIR/data-warehouse.log" 2>&1 &
+        echo $! > "$PID_DIR/data-warehouse.pid"
+    else
+        make up
+    fi
+    
+    # Health check
+    if [[ "$SKIP_HEALTH_CHECK" != "true" ]]; then
+        log "⏳ Waiting for data warehouse to be ready..."
+        sleep 10
+        
+        local retries=30
+        while ! curl -s http://localhost:8123/ping > /dev/null 2>&1 && [[ $retries -gt 0 ]]; do
+            sleep 3
+            ((retries--))
+        done
+        
+        if [[ $retries -eq 0 ]]; then
+            error "Data warehouse failed to start within timeout"
+            return 1
+        fi
+        
+        make health
+    fi
+    
+    success "Data warehouse started successfully"
+    info "ClickHouse Play UI: http://localhost:8123/play"
+    info "Grafana Dashboards: http://localhost:3000 (admin/admin)"
+    info "Prometheus: http://localhost:9090"
+    
+    cd "$SCRIPT_DIR"
 }
 
-# Function to start monitoring (placeholder)
-start_monitoring() {
-    log "📈 Starting monitoring and logging stack..."
+# Function to start data pipelines
+start_data_pipelines() {
+    log "🔄 Starting Airflow ETL data pipelines..."
     
-    warning "Monitoring stack not yet implemented"
-    info "Placeholder: Will start Grafana, Prometheus, and log aggregation"
+    cd "$SCRIPT_DIR/data-pipelines"
     
-    # TODO: Implement monitoring stack
-    success "Monitoring placeholder completed"
+    # Check if .env exists
+    if [[ ! -f ".env" ]]; then
+        warning "Data pipelines .env file not found, copying from .env.example"
+        if [[ -f ".env.example" ]]; then
+            cp .env.example .env
+        fi
+        warning "Please review and update data-pipelines/.env with your configuration"
+    fi
+    
+    # Start data pipeline services
+    if [[ "$DETACHED" == "true" ]]; then
+        make up > "$LOG_DIR/data-pipelines.log" 2>&1 &
+        echo $! > "$PID_DIR/data-pipelines.pid"
+    else
+        make up
+    fi
+    
+    # Health check
+    if [[ "$SKIP_HEALTH_CHECK" != "true" ]]; then
+        log "⏳ Waiting for Airflow to be ready..."
+        sleep 15
+        
+        local retries=45
+        while ! curl -s http://localhost:8080/health > /dev/null 2>&1 && [[ $retries -gt 0 ]]; do
+            sleep 4
+            ((retries--))
+        done
+        
+        if [[ $retries -eq 0 ]]; then
+            error "Data pipelines failed to start within timeout"
+            return 1
+        fi
+        
+        make health
+    fi
+    
+    success "Data pipelines started successfully"
+    info "Airflow UI: http://localhost:8080 (admin/admin)"
+    info "ClickHouse (pipelines): http://localhost:8123"
+    info "Grafana (pipelines): http://localhost:3000"
+    
+    cd "$SCRIPT_DIR"
 }
 
 # Start services
@@ -330,12 +409,12 @@ for service in $SERVICES; do
         data-warehouse)
             start_data_warehouse
             ;;
-        monitoring)
-            start_monitoring
+        data-pipelines)
+            start_data_pipelines
             ;;
         *)
             error "Unknown service: $service"
-            warning "Available services: database, web-app, api, langflow, data-warehouse, monitoring, all"
+            warning "Available services: database, data-warehouse, data-pipelines, web-app, api, langflow, all"
             ;;
     esac
 done
@@ -352,16 +431,34 @@ else
     warning "Database: Not running"
 fi
 
-# TODO: Add status checks for other services as they're implemented
+# Data warehouse status
+if docker ps --format "table {{.Names}}" | grep -q "andi-clickhouse-warehouse"; then
+    success "Data Warehouse: Running (ClickHouse + Grafana + Prometheus)"
+else
+    warning "Data Warehouse: Not running"
+fi
+
+# Data pipelines status
+if docker ps --format "table {{.Names}}" | grep -q "airflow-webserver"; then
+    success "Data Pipelines: Running (Airflow + ETL)"
+else
+    warning "Data Pipelines: Not running"
+fi
 
 echo "─────────────────────────────────────"
 
 # Show access URLs
 echo
 info "🔗 Access URLs:"
-echo "   Database (PgAdmin): http://localhost:${PGADMIN_PORT:-5050}"
-echo "   Web App:           http://localhost:${ANDI_PORT:-3000} (coming soon)"
-echo "   API Docs:          http://localhost:${API_PORT:-3001}/docs (coming soon)"
+echo "   Database (PgAdmin):     http://localhost:${PGADMIN_PORT:-5050}"
+echo "   Data Warehouse:"
+echo "     - ClickHouse Play:    http://localhost:8123/play"
+echo "     - Grafana:            http://localhost:3000 (admin/admin)"
+echo "     - Prometheus:         http://localhost:9090"
+echo "   Data Pipelines:"
+echo "     - Airflow UI:         http://localhost:8080 (admin/admin)"
+echo "   Web App:               http://localhost:${ANDI_PORT:-3000} (coming soon)"
+echo "   API Docs:              http://localhost:${API_PORT:-3001}/docs (coming soon)"
 
 # Show logs if requested
 if [[ "$SHOW_LOGS" == "true" && "$DETACHED" == "true" ]]; then
@@ -373,10 +470,14 @@ fi
 # Show useful commands
 echo
 info "💡 Useful commands:"
-echo "   Stop all:          ./stop-andi.sh"
-echo "   View logs:         tail -f logs/*.log"
-echo "   Database CLI:      cd app/app-database && make psql"
-echo "   Health check:      cd app/app-database && make health-check"
+echo "   Stop all:              ./stop-andi.sh"
+echo "   View logs:             tail -f logs/*.log"
+echo "   Database CLI:          cd app/app-database && make psql"
+echo "   Database health:       cd app/app-database && make health-check"
+echo "   Warehouse setup:       cd data-warehouse && make setup"
+echo "   Warehouse queries:     cd data-warehouse && make sample-analytics"
+echo "   Pipeline health:       cd data-pipelines && make health"
+echo "   Pipeline logs:         cd data-pipelines && make logs"
 
 echo
 success "🚀 ANDI application startup completed!"
