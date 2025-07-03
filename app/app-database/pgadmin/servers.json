@@ -1,0 +1,14 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "ANDI Local Database",
+            "Group": "Development",
+            "Host": "postgres",
+            "Port": 5432,
+            "MaintenanceDB": "postgres",
+            "Username": "andi_user",
+            "SSLMode": "prefer",
+            "Comment": "Local development database for ANDI application"
+        }
+    }
+}

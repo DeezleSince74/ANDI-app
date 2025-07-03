@@ -1,0 +1,27 @@
+{
+  "name": "@andi/database",
+  "version": "1.0.0",
+  "description": "Database connection and utilities for ANDI application",
+  "main": "connection.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint .",
+    "health-check": "node scripts/health-check.js"
+  },
+  "dependencies": {
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "eslint": "^8.57.0"
+  },
+  "keywords": [
+    "database",
+    "postgresql",
+    "andi",
+    "education"
+  ],
+  "author": "ANDI Labs",
+  "license": "MIT"
+}
