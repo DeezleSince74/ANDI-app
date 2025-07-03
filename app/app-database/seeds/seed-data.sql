@@ -10,10 +10,10 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Insert test schools
 INSERT INTO core.schools (id, name, district_id, school_type, address, phone, contact_email) VALUES
-    ('550e8400-e29b-41d4-a716-446655440004', 'Lincoln Elementary School', '550e8400-e29b-41d4-a716-446655440001', 'public', '123 Main St, Rockville, MD 20850', '301-555-0001', 'lincoln@mcps.edu'),
-    ('550e8400-e29b-41d4-a716-446655440005', 'Washington Middle School', '550e8400-e29b-41d4-a716-446655440001', 'public', '456 Oak Ave, Bethesda, MD 20814', '301-555-0002', 'washington@mcps.edu'),
-    ('550e8400-e29b-41d4-a716-446655440006', 'Roosevelt High School', '550e8400-e29b-41d4-a716-446655440002', 'public', '789 Pine St, College Park, MD 20740', '301-555-0003', 'roosevelt@pgcps.edu'),
-    ('550e8400-e29b-41d4-a716-446655440007', 'Jefferson Charter School', NULL, 'charter', '321 Elm St, Baltimore, MD 21201', '410-555-0004', 'jefferson@charter.edu')
+    ('550e8400-e29b-41d4-a716-446655440004', 'Lincoln Elementary School', '550e8400-e29b-41d4-a716-446655440001', 'public', '123 Main St, Rockville, MD 20850', '+13015550001', 'lincoln@mcps.edu'),
+    ('550e8400-e29b-41d4-a716-446655440005', 'Washington Middle School', '550e8400-e29b-41d4-a716-446655440001', 'public', '456 Oak Ave, Bethesda, MD 20814', '+13015550002', 'washington@mcps.edu'),
+    ('550e8400-e29b-41d4-a716-446655440006', 'Roosevelt High School', '550e8400-e29b-41d4-a716-446655440002', 'public', '789 Pine St, College Park, MD 20740', '+13015550003', 'roosevelt@pgcps.edu'),
+    ('550e8400-e29b-41d4-a716-446655440007', 'Jefferson Charter School', NULL, 'charter', '321 Elm St, Baltimore, MD 21201', '+14105550004', 'jefferson@charter.edu')
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert test users
@@ -55,9 +55,9 @@ ON CONFLICT (coach_id, teacher_id) DO NOTHING;
 
 -- Insert sample teacher goals
 INSERT INTO core.teacher_goals (teacher_id, category, title, description, status, target_date, progress_percentage) VALUES
-    ('550e8400-e29b-41d4-a716-446655440008', 'equity', 'Improve Student Voice in Math Discussions', 'Increase the percentage of students who actively participate in math discussions', 'active', '2024-06-01', 35),
-    ('550e8400-e29b-41d4-a716-446655440008', 'innovation', 'Integrate Technology in Science Lessons', 'Use digital tools to enhance hands-on science experiments', 'active', '2024-08-15', 60),
-    ('550e8400-e29b-41d4-a716-446655440009', 'creativity', 'Develop Creative Writing Workshop', 'Implement weekly creative writing sessions with peer feedback', 'active', '2024-05-30', 80)
+    ('550e8400-e29b-41d4-a716-446655440008', 'equity', 'Improve Student Voice in Math Discussions', 'Increase the percentage of students who actively participate in math discussions', 'active', '2025-12-01', 35),
+    ('550e8400-e29b-41d4-a716-446655440008', 'innovation', 'Integrate Technology in Science Lessons', 'Use digital tools to enhance hands-on science experiments', 'active', '2025-08-15', 60),
+    ('550e8400-e29b-41d4-a716-446655440009', 'creativity', 'Develop Creative Writing Workshop', 'Implement weekly creative writing sessions with peer feedback', 'active', '2025-12-30', 80)
 ON CONFLICT DO NOTHING;
 
 -- Insert sample achievements
@@ -140,4 +140,8 @@ UPDATE core.resources SET views_count = floor(random() * 500) + 50, likes_count 
 UPDATE core.classroom_activities SET likes_count = floor(random() * 50) + 5;
 UPDATE community.forum_questions SET upvotes_count = floor(random() * 20) + 1;
 
-RAISE NOTICE 'Sample data inserted successfully!';
+-- Display completion message
+DO $$
+BEGIN
+    RAISE NOTICE 'Sample data inserted successfully!';
+END $$;

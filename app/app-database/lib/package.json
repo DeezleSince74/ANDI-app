@@ -1,26 +1,40 @@
 {
   "name": "@andi/database",
   "version": "1.0.0",
-  "description": "Database connection and utilities for ANDI application",
-  "main": "connection.js",
+  "description": "Type-safe database connection and utilities for ANDI application",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
     "test": "jest",
     "test:watch": "jest --watch",
-    "lint": "eslint .",
-    "health-check": "node scripts/health-check.js"
+    "lint": "eslint . --ext .ts,.js",
+    "health-check": "node dist/health-check.js",
+    "generate": "drizzle-kit generate:pg",
+    "migrate": "drizzle-kit push:pg"
   },
   "dependencies": {
+    "drizzle-orm": "^0.29.3",
     "pg": "^8.11.3"
   },
   "devDependencies": {
+    "@types/node": "^20.10.6",
+    "@types/pg": "^8.10.9",
+    "@typescript-eslint/eslint-plugin": "^6.16.0",
+    "@typescript-eslint/parser": "^6.16.0",
+    "drizzle-kit": "^0.20.8",
+    "eslint": "^8.57.0",
     "jest": "^29.7.0",
-    "eslint": "^8.57.0"
+    "typescript": "^5.3.3"
   },
   "keywords": [
     "database",
     "postgresql",
     "andi",
-    "education"
+    "education",
+    "drizzle",
+    "typescript"
   ],
   "author": "ANDI Labs",
   "license": "MIT"
