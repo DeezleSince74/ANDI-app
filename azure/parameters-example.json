@@ -1,0 +1,88 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "eastus"
+    },
+    "environmentName": {
+      "value": "dev"
+    },
+    "administratorLogin": {
+      "value": "andi_admin"
+    },
+    "administratorLoginPassword": {
+      "value": "ChangeMe123!"
+    },
+    "database": {
+      "postgresqlVersion": {
+        "value": "16"
+      },
+      "skuName": {
+        "value": "Standard_B2s"
+      },
+      "skuTier": {
+        "value": "Burstable"
+      },
+      "storageSize": {
+        "value": 32768
+      },
+      "backupRetentionDays": {
+        "value": 7
+      },
+      "allowedIpRanges": {
+        "value": [
+          {
+            "start": "0.0.0.0",
+            "end": "0.0.0.0"
+          }
+        ]
+      }
+    },
+    "warehouse": {
+      "nodeSize": {
+        "value": "Standard_D2s_v3"
+      },
+      "diskSize": {
+        "value": 128
+      },
+      "storageSkuName": {
+        "value": "Standard_LRS"
+      }
+    },
+    "pipelines": {
+      "airflowVersion": {
+        "value": "2.7.3"
+      },
+      "schedulerReplicas": {
+        "value": 1
+      },
+      "workerReplicas": {
+        "value": 1
+      },
+      "redisSku": {
+        "value": "Basic"
+      },
+      "redisCapacity": {
+        "value": 0
+      }
+    },
+    "monitoring": {
+      "enableDiagnostics": {
+        "value": true
+      },
+      "logRetentionDays": {
+        "value": 30
+      }
+    },
+    "tags": {
+      "value": {
+        "Environment": "dev",
+        "Application": "ANDI",
+        "Owner": "DevTeam",
+        "CostCenter": "Engineering",
+        "Project": "AI-Instructional-Coach"
+      }
+    }
+  }
+}

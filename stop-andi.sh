@@ -221,7 +221,7 @@ stop_data_warehouse() {
     stop_process "data-warehouse"
     
     # Stop Docker containers
-    cd "$SCRIPT_DIR/data-warehouse"
+    cd "$SCRIPT_DIR/app/data-warehouse"
     
     if docker-compose ps | grep -q "andi-clickhouse-warehouse\|andi-grafana-warehouse"; then
         if [[ "$FORCE_STOP" == "true" ]]; then
@@ -244,7 +244,7 @@ stop_data_pipelines() {
     stop_process "data-pipelines"
     
     # Stop Docker containers
-    cd "$SCRIPT_DIR/data-pipelines"
+    cd "$SCRIPT_DIR/app/data-pipelines"
     
     if docker-compose ps | grep -q "airflow-"; then
         if [[ "$FORCE_STOP" == "true" ]]; then

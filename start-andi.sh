@@ -176,8 +176,8 @@ if [[ "$CLEAN_START" == "true" ]]; then
     
     # Clean Docker containers
     docker-compose -f app/app-database/docker-compose.yml down -v 2>/dev/null || true
-    docker-compose -f data-warehouse/docker-compose.yml down -v 2>/dev/null || true
-    docker-compose -f data-pipelines/docker-compose.yml down -v 2>/dev/null || true
+    docker-compose -f app/data-warehouse/docker-compose.yml down -v 2>/dev/null || true
+    docker-compose -f app/data-pipelines/docker-compose.yml down -v 2>/dev/null || true
     
     success "Cleanup completed"
 fi
@@ -295,7 +295,7 @@ start_langflow() {
 start_data_warehouse() {
     log "📊 Starting ClickHouse data warehouse..."
     
-    cd "$SCRIPT_DIR/data-warehouse"
+    cd "$SCRIPT_DIR/app/data-warehouse"
     
     # Check if .env exists
     if [[ ! -f ".env" ]]; then
@@ -345,7 +345,7 @@ start_data_warehouse() {
 start_data_pipelines() {
     log "🔄 Starting Airflow ETL data pipelines..."
     
-    cd "$SCRIPT_DIR/data-pipelines"
+    cd "$SCRIPT_DIR/app/data-pipelines"
     
     # Check if .env exists
     if [[ ! -f ".env" ]]; then
@@ -474,10 +474,10 @@ echo "   Stop all:              ./stop-andi.sh"
 echo "   View logs:             tail -f logs/*.log"
 echo "   Database CLI:          cd app/app-database && make psql"
 echo "   Database health:       cd app/app-database && make health-check"
-echo "   Warehouse setup:       cd data-warehouse && make setup"
-echo "   Warehouse queries:     cd data-warehouse && make sample-analytics"
-echo "   Pipeline health:       cd data-pipelines && make health"
-echo "   Pipeline logs:         cd data-pipelines && make logs"
+echo "   Warehouse setup:       cd app/data-warehouse && make setup"
+echo "   Warehouse queries:     cd app/data-warehouse && make sample-analytics"
+echo "   Pipeline health:       cd app/data-pipelines && make health"
+echo "   Pipeline logs:         cd app/data-pipelines && make logs"
 
 echo
 success "🚀 ANDI application startup completed!"
