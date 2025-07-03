@@ -204,14 +204,27 @@ stop_api() {
     fi
 }
 
-# Function to stop Langflow (placeholder)
+# Function to stop Langflow AI workflow engine
 stop_langflow() {
     log "🤖 Stopping Langflow AI workflow engine..."
     
     stop_process "langflow"
     
-    # TODO: Add Langflow specific cleanup when implemented
-    log "Langflow stop placeholder completed"
+    # Stop Docker containers
+    cd "$SCRIPT_DIR/app/langflow"
+    
+    if docker-compose -f docker-compose.dev.yml ps | grep -q "andi-langflow-dev\|andi-langflow-postgres-dev"; then
+        if [[ "$FORCE_STOP" == "true" ]]; then
+            docker-compose -f docker-compose.dev.yml kill
+        else
+            docker-compose -f docker-compose.dev.yml down
+        fi
+        success "Langflow containers stopped"
+    else
+        log "Langflow containers not running"
+    fi
+    
+    cd "$SCRIPT_DIR"
 }
 
 # Function to stop data warehouse

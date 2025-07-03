@@ -87,6 +87,7 @@ Deployment Order:
     1. PostgreSQL Database (app-database)
     2. ClickHouse Data Warehouse (data-warehouse)
     3. Airflow Data Pipelines (data-pipelines)
+    4. Langflow AI Workflows (langflow)
 
 EOF
 }
@@ -158,13 +159,13 @@ IFS=',' read -ra DEPLOY_COMPONENTS <<< "$COMPONENTS"
 
 # Handle 'all' component
 if [[ "$COMPONENTS" == "all" ]]; then
-    DEPLOY_COMPONENTS=("database" "warehouse" "pipelines")
+    DEPLOY_COMPONENTS=("database" "warehouse" "pipelines" "langflow")
 fi
 
 # Validate components
 for component in "${DEPLOY_COMPONENTS[@]}"; do
-    if [[ ! "$component" =~ ^(database|warehouse|pipelines)$ ]]; then
-        error "Invalid component: $component. Must be one of: database, warehouse, pipelines, all"
+    if [[ ! "$component" =~ ^(database|warehouse|pipelines|langflow)$ ]]; then
+        error "Invalid component: $component. Must be one of: database, warehouse, pipelines, langflow, all"
         exit 1
     fi
 done
@@ -305,6 +306,34 @@ for component in "${DEPLOY_COMPONENTS[@]}"; do
             
             success "Data pipelines deployment completed"
             ;;
+            
+        langflow)
+            log "🤖 Deploying Langflow AI Workflows..."
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            
+            # Ensure PostgreSQL server exists for Langflow database
+            if [[ -z "$POSTGRES_SERVER" ]]; then
+                POSTGRES_SERVER="andi-postgres-$ENVIRONMENT"
+                
+                # Verify server exists
+                if ! az postgres flexible-server show --resource-group "$RESOURCE_GROUP" --name "$POSTGRES_SERVER" &> /dev/null; then
+                    error "PostgreSQL server '$POSTGRES_SERVER' not found. Deploy database component first."
+                    exit 1
+                fi
+            fi
+            
+            cd "$PROJECT_ROOT/app/langflow/azure"
+            
+            ./deploy.sh \
+                --resource-group "$RESOURCE_GROUP" \
+                --location "$LOCATION" \
+                --environment "$ENVIRONMENT" \
+                --admin-login "$ADMIN_LOGIN" \
+                --admin-password "$ADMIN_PASSWORD" \
+                --postgres-server "$POSTGRES_SERVER"
+            
+            success "Langflow deployment completed"
+            ;;
     esac
     
     echo
@@ -352,6 +381,18 @@ if [[ " ${DEPLOY_COMPONENTS[*]} " =~ " pipelines " ]]; then
     fi
 fi
 
+if [[ " ${DEPLOY_COMPONENTS[*]} " =~ " langflow " ]]; then
+    LANGFLOW_URL=$(az containerapp show \
+        --name "andi-langflow-$ENVIRONMENT" \
+        --resource-group "$RESOURCE_GROUP" \
+        --query "properties.configuration.ingress.fqdn" \
+        --output tsv 2>/dev/null || echo "Not deployed")
+    
+    if [[ "$LANGFLOW_URL" != "Not deployed" && "$LANGFLOW_URL" != "" ]]; then
+        LANGFLOW_URL="https://$LANGFLOW_URL"
+    fi
+fi
+
 # Display final summary
 echo
 success "🎉 ANDI Azure Deployment Completed!"
@@ -375,6 +416,11 @@ if [[ -n "$AIRFLOW_URL" && "$AIRFLOW_URL" != "Not deployed" ]]; then
     echo "Airflow Login:             $ADMIN_LOGIN / [your password]"
 fi
 
+if [[ -n "$LANGFLOW_URL" && "$LANGFLOW_URL" != "Not deployed" ]]; then
+    echo "Langflow AI Workflows:     $LANGFLOW_URL"
+    echo "Langflow Login:            $ADMIN_LOGIN / [your password]"
+fi
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 echo
@@ -390,9 +436,11 @@ log "📖 Next Steps:"
 echo "  1. Configure database schemas and seed data"
 echo "  2. Set up ClickHouse warehouse schemas"
 echo "  3. Upload Airflow DAGs and configure connections"
-echo "  4. Set up monitoring and alerting"
-echo "  5. Configure SSL certificates for production"
-echo "  6. Set up backup and disaster recovery"
+echo "  4. Create Langflow AI workflows for CIQ analysis"
+echo "  5. Configure Langflow database connectors to ANDI data"
+echo "  6. Set up monitoring and alerting"
+echo "  7. Configure SSL certificates for production"
+echo "  8. Set up backup and disaster recovery"
 
 echo
 info "💡 Cost Optimization Tips:"
