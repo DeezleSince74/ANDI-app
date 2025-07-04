@@ -5,9 +5,21 @@ import { auth } from "~/server/auth"
 
 export async function POST(req: NextRequest) {
   try {
-    // Check authentication
+    // Check authentication (allow mock user in development)
     const session = await auth()
-    if (!session?.user?.id) {
+    const isDevelopment = process.env.NODE_ENV === 'development'
+    
+    if (!session?.user?.id && !isDevelopment) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      )
+    }
+    
+    // Use mock user ID in development if no session
+    const userId = session?.user?.id || (isDevelopment ? 'mock-user-id' : null)
+    
+    if (!userId) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
@@ -44,6 +56,8 @@ export async function POST(req: NextRequest) {
 
     // Convert file to buffer
     const buffer = Buffer.from(await file.arrayBuffer())
+    
+    console.log(`Processing image: ${file.name}, size: ${file.size}, type: ${file.type}`)
 
     // Process and save image
     const result = await saveImage(buffer, file.name, {
@@ -52,7 +66,7 @@ export async function POST(req: NextRequest) {
     })
 
     // Log successful upload
-    console.log(`Image uploaded successfully: ${result.filename} (${result.size} bytes)`)
+    console.log(`Image uploaded successfully: ${result.filename} (${result.size} bytes) for user: ${userId}`)
 
     return NextResponse.json({
       success: true,
@@ -68,6 +82,8 @@ export async function POST(req: NextRequest) {
     console.error("Image upload error:", error)
     
     if (error instanceof Error) {
+      console.error("Error details:", error.message, error.stack)
+      
       if (error.message.includes('file size')) {
         return NextResponse.json(
           { error: "File too large. Maximum size is 5MB." },
@@ -80,6 +96,11 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         )
       }
+      
+      return NextResponse.json(
+        { error: `Upload failed: ${error.message}` },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json(

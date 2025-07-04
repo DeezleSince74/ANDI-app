@@ -4,9 +4,21 @@ import { auth } from "~/server/auth"
 
 export async function POST(req: NextRequest) {
   try {
-    // Check authentication
+    // Check authentication (allow mock user in development)
     const session = await auth()
-    if (!session?.user?.id) {
+    const isDevelopment = process.env.NODE_ENV === 'development'
+    
+    if (!session?.user?.id && !isDevelopment) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      )
+    }
+    
+    // Use mock user ID in development if no session
+    const userId = session?.user?.id || (isDevelopment ? 'mock-user-id' : null)
+    
+    if (!userId) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
