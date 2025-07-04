@@ -32,12 +32,29 @@ export default function PhotoUploadPage() {
     if (selectedFile) {
       setIsUploading(true)
       try {
-        // TODO: Upload file to storage service and get URL
-        // For now, just use the preview URL as a placeholder
-        const uploadedUrl = previewUrl // This would be the actual uploaded URL
-        updateData({ avatarUrl: uploadedUrl })
+        // Upload file to local storage
+        const formData = new FormData()
+        formData.append('image', selectedFile)
+        
+        const response = await fetch('/api/upload/image', {
+          method: 'POST',
+          body: formData,
+        })
+        
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Upload failed')
+        }
+        
+        const result = await response.json()
+        updateData({ avatarUrl: result.file.url })
+        
+        console.log('Photo uploaded successfully:', result.file.filename)
       } catch (error) {
         console.error('Error uploading photo:', error)
+        // TODO: Show user-friendly error message
+        alert('Failed to upload photo. Please try again.')
+        return // Don't proceed if upload failed
       } finally {
         setIsUploading(false)
       }

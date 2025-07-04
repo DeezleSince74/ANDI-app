@@ -22,6 +22,7 @@ export default function VoiceRecordingPage() {
   const [isRecording, setIsRecording] = useState(false)
   const [recordedPhrases, setRecordedPhrases] = useState<boolean[]>([false, false, false])
   const [audioBlobs, setAudioBlobs] = useState<Blob[]>([])
+  const [isUploading, setIsUploading] = useState(false)
   const mediaRecorder = useRef<MediaRecorder | null>(null)
   const audioChunks = useRef<Blob[]>([])
 
@@ -69,16 +70,72 @@ export default function VoiceRecordingPage() {
     if (currentPhrase < VOICE_PHRASES.length - 1) {
       setCurrentPhrase(currentPhrase + 1)
     } else {
-      // TODO: Upload audio blobs and save voice sample URL
-      // For now, just complete onboarding
+      // Upload all audio recordings and complete onboarding
+      await uploadAudioAndComplete()
+    }
+  }
+
+  const uploadAudioAndComplete = async () => {
+    setIsUploading(true)
+    
+    try {
+      // Combine all audio blobs into one file
+      const combinedBlob = new Blob(audioBlobs, { type: 'audio/webm' })
+      
+      // Upload the combined audio file
+      const formData = new FormData()
+      formData.append('audio', combinedBlob, 'voice-sample.webm')
+      
+      const response = await fetch('/api/upload/audio', {
+        method: 'POST',
+        body: formData,
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Upload failed')
+      }
+      
+      const result = await response.json()
+      
+      // Update onboarding data with voice sample URL
+      updateData({ voiceSampleUrl: result.file.url })
+      
+      console.log('Voice sample uploaded successfully:', result.file.filename)
+      
+      // Complete onboarding
       await completeOnboarding()
+      
+    } catch (error) {
+      console.error('Error uploading voice sample:', error)
+      alert('Failed to upload voice sample. Please try again.')
+    } finally {
+      setIsUploading(false)
     }
   }
 
   const completeOnboarding = async () => {
-    // TODO: Call API to save all onboarding data
-    console.log('Onboarding data:', data)
-    router.push('/dashboard')
+    try {
+      // Call API to save all onboarding data to database
+      const response = await fetch('/api/onboarding/complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to complete onboarding')
+      }
+      
+      console.log('Onboarding completed successfully!')
+      router.push('/dashboard')
+      
+    } catch (error) {
+      console.error('Error completing onboarding:', error)
+      alert('Failed to complete onboarding. Please try again.')
+    }
   }
 
   const allPhrasesRecorded = recordedPhrases.every(recorded => recorded)
@@ -148,7 +205,8 @@ export default function VoiceRecordingPage() {
         onNext={handleNext}
         backPath="/onboarding/voice-intro"
         nextLabel={currentPhrase < VOICE_PHRASES.length - 1 ? "Next Phrase" : "Complete Onboarding"}
-        isNextDisabled={!recordedPhrases[currentPhrase] || isRecording}
+        isNextDisabled={!recordedPhrases[currentPhrase] || isRecording || isUploading}
+        isLoading={isUploading}
       />
     </div>
   )
