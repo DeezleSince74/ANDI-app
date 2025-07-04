@@ -33,6 +33,9 @@
 - [ ] **Extend E2E tests** - Add more Playwright tests for full user flows
 - [ ] **Add accessibility testing** - Automated a11y testing in CI/CD
 - [ ] **Performance optimization** - Bundle analysis and performance improvements
+- [ ] **Set up CI/CD environment for tests** - Configure production OAuth credentials for GitHub Actions
+- [ ] **Configure test database for CI** - Set up test database or implement mocks for automated testing
+- [ ] **Re-enable GitHub Actions workflow** - Uncomment automatic triggers once CI environment is ready
 
 ### Legal & Compliance
 - [ ] **Review and finalize Terms of Service** - Legal review of current terms
