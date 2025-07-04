@@ -68,5 +68,6 @@ ANDI addresses critical educational challenges:
 - Ensure all AI recommendations are research-backed and non-evaluative
 - Test audio processing features thoroughly
 - Maintain accessibility standards for educational software
-- Use slate color palette for consistent UI design
+- **Use slate color palette for consistent UI design** (Reference: https://ui.shadcn.com/colors)
 - Keep login form at 50% transparency for glass morphism effect
+- Apply ShadCN slate color scheme throughout all components and interfaces

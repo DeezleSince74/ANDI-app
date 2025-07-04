@@ -4,8 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import { Button } from "~/components/ui/button"
 import { signOut } from "next-auth/react"
 import { LogOut, User, School, BookOpen } from "lucide-react"
+import { redirectToOnboardingIfNeeded } from "~/lib/onboarding-check"
 
 export default async function DashboardPage() {
+  // Check authentication and onboarding completion
+  await redirectToOnboardingIfNeeded()
+  
   const session = await auth()
 
   if (!session) {
