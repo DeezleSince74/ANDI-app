@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "~/server/auth"
+import { completeOnboarding } from "~/server/db/onboarding"
 
 // POST /api/onboarding/complete - Complete onboarding and save all data
 export async function POST(req: NextRequest) {
@@ -23,29 +24,26 @@ export async function POST(req: NextRequest) {
       avatarUrl
     } = body
 
-    // TODO: Save to teacher_profiles table
-    const teacherProfile = {
-      user_id: session.user.id,
-      grades_taught: gradeLevels,
-      subjects_taught: subjects,
-      years_experience: yearsExperience,
-      teaching_styles: teachingStyles,
-      personal_interests: interests,
+    const teacherProfile = await completeOnboarding(session.user.id, {
+      gradesTaught: gradeLevels,
+      subjectsTaught: subjects,
+      yearsExperience: yearsExperience,
+      teachingStyles: teachingStyles,
+      personalInterests: interests,
       strengths: strengths,
-      voice_sample_url: voiceSampleUrl,
-      avatar_url: avatarUrl,
-      onboarding_completed: true,
-      preferences: {
-        selected_goals: goals
-      }
-    }
-
-    console.log("Completing onboarding with profile:", teacherProfile)
-
-    // TODO: Also create teacher goals based on selected goal IDs
+      goals: goals,
+      voiceSampleUrl: voiceSampleUrl,
+      avatarUrl: avatarUrl
+    })
 
     return NextResponse.json({ 
       success: true,
+      profile: {
+        userId: teacherProfile.userId,
+        onboardingCompleted: teacherProfile.onboardingCompleted,
+        createdAt: teacherProfile.createdAt?.toISOString(),
+        updatedAt: teacherProfile.updatedAt?.toISOString()
+      },
       redirectUrl: "/dashboard"
     })
   } catch (error) {

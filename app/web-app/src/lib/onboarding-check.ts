@@ -1,5 +1,6 @@
 import { auth } from "~/server/auth"
 import { redirect } from "next/navigation"
+import { checkOnboardingCompletion as dbCheckOnboardingCompletion } from "~/server/db/onboarding"
 
 export async function checkOnboardingCompletion() {
   const session = await auth()
@@ -8,14 +9,22 @@ export async function checkOnboardingCompletion() {
     return { needsAuth: true }
   }
 
-  // TODO: Check if user has completed onboarding by querying teacher_profiles table
-  // For now, always redirect to onboarding (this would be replaced with actual DB check)
-  const hasCompletedOnboarding = false // await checkTeacherProfileExists(session.user.id)
-  
-  return { 
-    needsAuth: false, 
-    needsOnboarding: !hasCompletedOnboarding,
-    user: session.user 
+  try {
+    const hasCompletedOnboarding = await dbCheckOnboardingCompletion(session.user.id)
+    
+    return { 
+      needsAuth: false, 
+      needsOnboarding: !hasCompletedOnboarding,
+      user: session.user 
+    }
+  } catch (error) {
+    console.error("Error checking onboarding completion:", error)
+    // Default to requiring onboarding if there's an error
+    return { 
+      needsAuth: false, 
+      needsOnboarding: true,
+      user: session.user 
+    }
   }
 }
 

@@ -9,6 +9,7 @@ import {
   integer,
   jsonb,
   primaryKey,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
 
@@ -196,5 +197,119 @@ export const auditLogs = createTable(
     actionIdx: index("audit_log_action_idx").on(log.action),
     resourceIdx: index("audit_log_resource_idx").on(log.resource),
     timestampIdx: index("audit_log_timestamp_idx").on(log.timestamp),
+  })
+);
+
+// Onboarding Tables
+export const onboardingContent = createTable(
+  "onboarding_content",
+  {
+    id: varchar("id", { length: 255 })
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    screenName: varchar("screen_name", { length: 50 }).notNull(),
+    contentType: varchar("content_type", { length: 50 }).notNull(), // 'option', 'instruction', 'label', 'placeholder'
+    contentKey: varchar("content_key", { length: 100 }).notNull(),
+    contentValue: text("content_value").notNull(),
+    displayOrder: integer("display_order").default(0),
+    isActive: boolean("is_active").default(true),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
+      () => new Date()
+    ),
+  },
+  (content) => ({
+    screenNameIdx: index("onboarding_content_screen_idx").on(content.screenName),
+    activeIdx: index("onboarding_content_active_idx").on(content.isActive),
+    compoundKey: index("onboarding_content_compound_idx").on(
+      content.screenName,
+      content.contentType,
+      content.contentKey
+    ),
+  })
+);
+
+export const onboardingProgress = createTable(
+  "onboarding_progress",
+  {
+    userId: varchar("user_id", { length: 255 })
+      .notNull()
+      .primaryKey()
+      .references(() => users.id),
+    currentStep: integer("current_step").default(1),
+    completedSteps: jsonb("completed_steps").$type<number[]>().default([]),
+    stepData: jsonb("step_data").$type<Record<string, unknown>>().default({}),
+    startedAt: timestamp("started_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
+      () => new Date()
+    ),
+  },
+  (progress) => ({
+    userIdIdx: index("onboarding_progress_user_idx").on(progress.userId),
+  })
+);
+
+export const onboardingGoals = createTable(
+  "onboarding_goals",
+  {
+    id: varchar("id", { length: 255 })
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    category: varchar("category", { length: 20 }).notNull(), // 'equity', 'creativity', 'innovation'
+    title: varchar("title", { length: 255 }).notNull(),
+    description: text("description").notNull(),
+    displayOrder: integer("display_order").default(0),
+    isActive: boolean("is_active").default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
+      () => new Date()
+    ),
+  },
+  (goals) => ({
+    categoryIdx: index("onboarding_goals_category_idx").on(goals.category),
+    activeIdx: index("onboarding_goals_active_idx").on(goals.isActive),
+  })
+);
+
+// Teacher Profile Table (enhanced version of user fields)
+export const teacherProfiles = createTable(
+  "teacher_profile",
+  {
+    userId: varchar("user_id", { length: 255 })
+      .notNull()
+      .primaryKey()
+      .references(() => users.id),
+    schoolId: varchar("school_id", { length: 255 }),
+    gradesTaught: jsonb("grades_taught").$type<string[]>(),
+    subjectsTaught: jsonb("subjects_taught").$type<string[]>(),
+    yearsExperience: integer("years_experience"),
+    teachingStyles: jsonb("teaching_styles").$type<string[]>(),
+    personalInterests: jsonb("personal_interests").$type<string[]>(),
+    strengths: jsonb("strengths").$type<string[]>(),
+    voiceSampleUrl: varchar("voice_sample_url", { length: 500 }),
+    avatarUrl: varchar("avatar_url", { length: 500 }),
+    onboardingCompleted: boolean("onboarding_completed").default(false),
+    preferences: jsonb("preferences").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
+      () => new Date()
+    ),
+  },
+  (profile) => ({
+    userIdIdx: index("teacher_profile_user_idx").on(profile.userId),
+    schoolIdIdx: index("teacher_profile_school_idx").on(profile.schoolId),
+    completedIdx: index("teacher_profile_completed_idx").on(profile.onboardingCompleted),
   })
 );
