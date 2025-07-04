@@ -1,20 +1,20 @@
 import Link from "next/link"
 import { Button } from "~/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
-import { GraduationCap, Users, BarChart3, Bot } from "lucide-react"
+import { Mic, Target, Users, Bot } from "lucide-react"
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-slate-50 shadow-sm border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-2">
-              <GraduationCap className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl font-bold text-gray-900">ANDI Labs</span>
+              <img src="/andi-logo-192.png" alt="ANDI logo" className="h-8 w-8" />
+              <span className="text-2xl font-bold text-slate-900">ANDI</span>
             </div>
-            <Button asChild>
+            <Button asChild className="bg-slate-700 hover:bg-slate-800 text-slate-50">
               <Link href="/auth/signin">Sign In</Link>
             </Button>
           </div>
@@ -24,18 +24,17 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            AI-Powered <span className="text-blue-600">Instructional Coaching</span>
+          <h1 className="text-4xl md:text-6xl font-bold text-slate-900 mb-6">
+            Transform Teaching Through <span className="text-slate-700">AI-Powered Classroom Analysis</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Empower educators with personalized AI guidance, data-driven insights, 
-            and collaborative tools to enhance teaching effectiveness and student outcomes.
+          <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto">
+            ANDI listens to your classroom, analyzes teaching effectiveness, and provides personalized coaching insights to help every educator thrive. <span className="font-medium text-slate-700">Your favorite teacher's favorite teacher.</span>
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" asChild>
+            <Button size="lg" asChild className="bg-slate-700 hover:bg-slate-800 text-slate-50">
               <Link href="/auth/signin">Get Started</Link>
             </Button>
-            <Button variant="outline" size="lg">
+            <Button variant="outline" size="lg" className="border-slate-300 text-slate-700 hover:bg-slate-100">
               Learn More
             </Button>
           </div>
@@ -43,48 +42,44 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Transforming Education with AI
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">
+              AI-Powered Classroom Analysis
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Our platform combines cutting-edge AI technology with educational expertise 
-              to provide personalized coaching for every educator.
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              From audio to action in minutes. ANDI captures classroom conversations and provides growth-focused insights without scores or judgment.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card>
+            <Card className="bg-slate-50 border-slate-200 hover:bg-slate-100 transition-colors">
               <CardHeader>
-                <Bot className="h-12 w-12 text-blue-600 mb-4" />
-                <CardTitle>AI Workflows</CardTitle>
-                <CardDescription>
-                  Intelligent automation for lesson planning, assessment creation, 
-                  and personalized student interventions.
+                <Mic className="h-12 w-12 text-slate-600 mb-4" />
+                <CardTitle className="text-slate-900">Classroom Audio Analysis</CardTitle>
+                <CardDescription className="text-slate-600">
+                  Capture and analyze real classroom conversations to understand teaching patterns, student engagement, and learning dynamics.
                 </CardDescription>
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="bg-slate-50 border-slate-200 hover:bg-slate-100 transition-colors">
               <CardHeader>
-                <BarChart3 className="h-12 w-12 text-green-600 mb-4" />
-                <CardTitle>Data Analytics</CardTitle>
-                <CardDescription>
-                  Real-time insights into student performance, engagement patterns, 
-                  and teaching effectiveness metrics.
+                <Target className="h-12 w-12 text-slate-600 mb-4" />
+                <CardTitle className="text-slate-900">CIQ Framework Insights</CardTitle>
+                <CardDescription className="text-slate-600">
+                  Measure classroom impact through our proprietary Classroom Impact Quotient, focusing on Equity, Creativity, and Innovation.
                 </CardDescription>
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="bg-slate-50 border-slate-200 hover:bg-slate-100 transition-colors">
               <CardHeader>
-                <Users className="h-12 w-12 text-purple-600 mb-4" />
-                <CardTitle>Collaboration</CardTitle>
-                <CardDescription>
-                  Connect with fellow educators, share best practices, 
-                  and learn from a community of professionals.
+                <Users className="h-12 w-12 text-slate-600 mb-4" />
+                <CardTitle className="text-slate-900">Non-Evaluative Coaching</CardTitle>
+                <CardDescription className="text-slate-600">
+                  Receive personalized, growth-focused recommendations that celebrate strengths and identify opportunities for development.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -93,31 +88,30 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20">
+      <section className="py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">
             Ready to Transform Your Teaching?
           </h2>
-          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-            Join thousands of educators who are already using ANDI to enhance 
-            their teaching practice and improve student outcomes.
+          <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
+            Making quality instructional coaching accessible to all educators. Built by educators, for educators.
           </p>
-          <Button size="lg" asChild>
+          <Button size="lg" asChild className="bg-slate-700 hover:bg-slate-800 text-slate-50">
             <Link href="/auth/signin">Start Your Journey</Link>
           </Button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-slate-900 text-slate-100 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <GraduationCap className="h-6 w-6" />
-              <span className="text-lg font-semibold">ANDI Labs</span>
+              <img src="/andi-logo-192.png" alt="ANDI logo" className="h-6 w-6" />
+              <span className="text-lg font-semibold text-slate-100">ANDI</span>
             </div>
-            <p className="text-gray-400">
-              © 2024 ANDI Labs. All rights reserved.
+            <p className="text-slate-400">
+              © 2024 ANDI. All rights reserved.
             </p>
           </div>
         </div>

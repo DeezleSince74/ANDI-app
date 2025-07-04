@@ -1,0 +1,79 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'app/web-app/**'
+      - '.github/workflows/e2e-tests.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'app/web-app/**'
+      - '.github/workflows/e2e-tests.yml'
+
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/web-app
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: app/web-app/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      
+      - name: Run type checking
+        run: npm run type-check
+      
+      - name: Run linting
+        run: npm run lint
+      
+      - name: Build application
+        run: npm run build
+        env:
+          DATABASE_URL: "postgresql://test:test@localhost:5432/test"
+          NEXTAUTH_SECRET: "test-secret"
+          NEXTAUTH_URL: "http://localhost:3000"
+      
+      - name: Run Playwright tests
+        run: npm run test:e2e
+        env:
+          DATABASE_URL: "postgresql://test:test@localhost:5432/test"
+          NEXTAUTH_SECRET: "test-secret"
+          NEXTAUTH_URL: "http://localhost:3000"
+          GOOGLE_CLIENT_ID: "test-google-id"
+          GOOGLE_CLIENT_SECRET: "test-google-secret"
+          AZURE_AD_CLIENT_ID: "test-azure-id"
+          AZURE_AD_CLIENT_SECRET: "test-azure-secret"
+          EMAIL_SERVER_HOST: "smtp.test.com"
+          EMAIL_SERVER_PORT: "587"
+          EMAIL_SERVER_USER: "test@test.com"
+          EMAIL_SERVER_PASSWORD: "test-password"
+          EMAIL_FROM: "noreply@test.com"
+      
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: app/web-app/playwright-report/
+          retention-days: 30
+      
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-screenshots
+          path: app/web-app/test-results/
+          retention-days: 7
