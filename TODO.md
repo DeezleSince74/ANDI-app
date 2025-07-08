@@ -28,6 +28,15 @@
 - [ ] **Create user profile and settings** - Allow users to manage their accounts
 - [ ] **Add data visualization components** - Charts and graphs for classroom insights
 
+### Dashboard Mock Data (Replace with Real Data)
+- [ ] **Replace classroom activities mock data** - Connect to database/datawarehouse for "Try this in your classroom" section
+- [ ] **Replace achievements mock data** - Connect to user progress tracking system
+- [ ] **Replace trivia questions mock data** - Connect to content management system
+- [ ] **Add performance gauge charts** - Implement actual CIQ scoring visualization (Overall Performance)
+- [ ] **Add domain performance donut chart** - Implement Equity/Creativity/Innovation breakdown visualization
+- [ ] **Add framework performance chart** - Implement detailed CIQ framework performance metrics
+- [ ] **Connect upload/record buttons to actual functionality** - Implement file upload and audio recording features
+
 ### Testing & Quality
 - [ ] **Add unit tests** - Test core functionality with Jest/Vitest
 - [ ] **Extend E2E tests** - Add more Playwright tests for full user flows

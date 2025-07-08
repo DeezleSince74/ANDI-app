@@ -14,7 +14,7 @@ export default function SignInPage() {
       }}
     >
       <div className="flex w-full max-w-sm flex-col gap-6">
-        <Link href="/" className="flex items-center gap-2 self-center font-medium text-slate-100">
+        <Link href="/" className="flex items-center gap-2 self-center font-medium text-white">
           <Image
             src="/andi-logo-192.png"
             alt="ANDI logo"
