@@ -5,6 +5,8 @@ import { AppSidebar } from "~/components/app-sidebar"
 import { AppHeader } from "~/components/app-header"
 import { redirectToOnboardingIfNeeded } from "~/lib/onboarding-check"
 import { SessionProvider } from "next-auth/react"
+import { RecordingProvider } from "~/lib/recording-context"
+import { Toaster } from "sonner"
 
 export default async function AuthenticatedLayout({
   children,
@@ -42,15 +44,27 @@ export default async function AuthenticatedLayout({
     
     return (
       <SessionProvider session={mockSession}>
-        <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset>
-            <AppHeader />
-            <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
-              {children}
-            </main>
-          </SidebarInset>
-        </SidebarProvider>
+        <RecordingProvider>
+          <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset>
+              <AppHeader />
+              <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
+                {children}
+              </main>
+            </SidebarInset>
+          </SidebarProvider>
+          <Toaster 
+            position="top-right"
+            toastOptions={{
+              style: {
+                background: 'white',
+                color: '#1e293b',
+                border: '1px solid #e2e8f0',
+              },
+            }}
+          />
+        </RecordingProvider>
       </SessionProvider>
     )
   }
@@ -75,15 +89,27 @@ export default async function AuthenticatedLayout({
 
   return (
     <SessionProvider session={session}>
-      <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset>
-          <AppHeader />
-          <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
-            {children}
-          </main>
-        </SidebarInset>
-      </SidebarProvider>
+      <RecordingProvider>
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset>
+            <AppHeader />
+            <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
+              {children}
+            </main>
+          </SidebarInset>
+        </SidebarProvider>
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: 'white',
+              color: '#1e293b',
+              border: '1px solid #e2e8f0',
+            },
+          }}
+        />
+      </RecordingProvider>
     </SessionProvider>
   )
 }

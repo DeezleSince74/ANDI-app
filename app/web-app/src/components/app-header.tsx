@@ -15,9 +15,33 @@ import {
 import { signOut } from "next-auth/react"
 import { useSession } from "next-auth/react"
 import { SidebarTrigger } from "~/components/ui/sidebar"
+import { useRecording } from "~/lib/recording-context"
+import UploadModal from "~/components/recording/UploadModal"
+import RecordingModal from "~/components/recording/RecordingModal"
+import FloatingRecorder from "~/components/recording/FloatingRecorder"
+import RecordingNotification from "~/components/recording/RecordingNotification"
+import StopConfirmationModal from "~/components/recording/StopConfirmationModal"
 
 export function AppHeader() {
   const { data: session } = useSession()
+  const {
+    recordingState,
+    isUploadModalOpen,
+    isRecordingModalOpen,
+    isStopConfirmationOpen,
+    notificationState,
+    startRecording,
+    pauseRecording,
+    resumeRecording,
+    stopRecording,
+    confirmStopRecording,
+    openUploadModal,
+    closeUploadModal,
+    openRecordingModal,
+    closeRecordingModal,
+    closeStopConfirmation,
+    hideNotification,
+  } = useRecording()
   
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "U"
@@ -29,6 +53,16 @@ export function AppHeader() {
       .slice(0, 2)
   }
 
+  const handleStartRecording = async (duration: number) => {
+    if (session?.user?.id) {
+      try {
+        await startRecording(duration, session.user.id)
+      } catch (error) {
+        console.error('Failed to start recording:', error)
+      }
+    }
+  }
+
   return (
     <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
       <SidebarTrigger className="-ml-1" />
@@ -38,6 +72,7 @@ export function AppHeader() {
             variant="outline" 
             size="default"
             className="gap-2"
+            onClick={openUploadModal}
           >
             <Upload className="h-4 w-4" />
             <span className="hidden sm:inline">Upload</span>
@@ -46,9 +81,13 @@ export function AppHeader() {
           <Button 
             size="default"
             className="gap-2"
+            onClick={openRecordingModal}
+            disabled={recordingState.isRecording}
           >
             <Mic className="h-4 w-4" />
-            <span className="hidden sm:inline">Record</span>
+            <span className="hidden sm:inline">
+              {recordingState.isRecording ? 'Recording...' : 'Record'}
+            </span>
           </Button>
           
           <Button
@@ -106,6 +145,43 @@ export function AppHeader() {
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Recording Modals */}
+      <UploadModal
+        isOpen={isUploadModalOpen}
+        onClose={closeUploadModal}
+        teacherId={session?.user?.id || ''}
+      />
+
+      <RecordingModal
+        isOpen={isRecordingModalOpen}
+        onClose={closeRecordingModal}
+        onStartRecording={handleStartRecording}
+      />
+
+      <StopConfirmationModal
+        isOpen={isStopConfirmationOpen}
+        onClose={closeStopConfirmation}
+        onConfirm={confirmStopRecording}
+        duration={recordingState.duration}
+      />
+
+      {/* Floating Recording Widget */}
+      <FloatingRecorder
+        isRecording={recordingState.isRecording}
+        isPaused={recordingState.isPaused}
+        duration={recordingState.duration}
+        onPause={pauseRecording}
+        onResume={resumeRecording}
+        onStop={stopRecording}
+      />
+
+      {/* Recording Notifications */}
+      <RecordingNotification
+        isVisible={notificationState.isVisible}
+        type={notificationState.type || 'ended'}
+        onClose={hideNotification}
+      />
     </header>
   )
 }
