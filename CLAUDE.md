@@ -24,7 +24,7 @@ ANDI addresses critical educational challenges:
 - **Frontend**: Next.js 15, TypeScript, Tailwind CSS, ShadCN UI
 - **Backend**: Node.js with API routes
 - **Database**: PostgreSQL (application data) + ClickHouse (data warehouse)
-- **AI Stack**: Assembly AI for transcription, OpenAI/Anthropic/Gemini for insights, RAG for contextualized recommendations
+- **AI Stack**: Assembly AI for transcription, OpenAI/Anthropic/Gemini for insights, Langflow for AI workflows, RAG for contextualized recommendations
 - **Authentication**: Auth.js v5 (NextAuth) with Google OAuth, Azure Entra ID, Email magic links
 - **Storage**: Cloud storage for media files
 - **Testing**: Playwright E2E tests with accessibility testing (axe-playwright)
@@ -54,6 +54,8 @@ ANDI addresses critical educational challenges:
 - **Accurate ANDI branding** and homepage copy based on actual functionality
 - **Glass morphism UI design** with optimized background image and transparency
 - **Font size optimization** for improved readability across all components
+- **Logbook page implementation** with weekly recording organization and status badges
+- **Langflow AI workflow engine** fully integrated with Docker and startup scripts
 
 ### 🚧 Next Steps (see TODO.md)
 - Sign up for Sentry and get production OAuth credentials
