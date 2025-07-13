@@ -223,7 +223,7 @@ stop_langflow() {
     stop_process "langflow"
     
     # Stop Docker containers
-    cd "$SCRIPT_DIR/app/langflow"
+    cd "$SCRIPT_DIR/app/Langflow"
     
     if docker-compose -f docker-compose.dev.yml ps | grep -q "andi-langflow-dev\|andi-langflow-postgres-dev"; then
         if [[ "$FORCE_STOP" == "true" ]]; then

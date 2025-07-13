@@ -178,7 +178,7 @@ if [[ "$CLEAN_START" == "true" ]]; then
     docker-compose -f app/app-database/docker-compose.yml down -v 2>/dev/null || true
     docker-compose -f app/data-warehouse/docker-compose.yml down -v 2>/dev/null || true
     docker-compose -f app/data-pipelines/docker-compose.yml down -v 2>/dev/null || true
-    docker-compose -f app/langflow/docker-compose.dev.yml down -v 2>/dev/null || true
+    docker-compose -f app/Langflow/docker-compose.dev.yml down -v 2>/dev/null || true
     
     success "Cleanup completed"
 fi
@@ -314,7 +314,7 @@ start_api() {
 start_langflow() {
     log "🤖 Starting Langflow AI workflow engine..."
     
-    cd "$SCRIPT_DIR/app/langflow"
+    cd "$SCRIPT_DIR/app/Langflow"
     
     # Check if .env exists
     if [[ ! -f ".env" ]]; then
@@ -322,7 +322,7 @@ start_langflow() {
         if [[ -f ".env.example" ]]; then
             cp .env.example .env
         fi
-        warning "Please review and update app/langflow/.env with your configuration"
+        warning "Please review and update app/Langflow/.env with your configuration"
     fi
     
     # Start Langflow services
@@ -350,7 +350,7 @@ start_langflow() {
         fi
         
         # Check health via make command
-        cd "$SCRIPT_DIR/app/langflow" && make status > /dev/null 2>&1
+        cd "$SCRIPT_DIR/app/Langflow" && make status > /dev/null 2>&1
     fi
     
     success "Langflow started successfully"
@@ -563,8 +563,8 @@ echo "   Warehouse setup:       cd app/data-warehouse && make setup"
 echo "   Warehouse queries:     cd app/data-warehouse && make sample-analytics"
 echo "   Pipeline health:       cd app/data-pipelines && make health"
 echo "   Pipeline logs:         cd app/data-pipelines && make logs"
-echo "   Langflow IDE:          cd app/langflow && make dev"
-echo "   Langflow health:       cd app/langflow && make health"
+echo "   Langflow IDE:          cd app/Langflow && make dev"
+echo "   Langflow health:       cd app/Langflow && make health"
 echo "   Web app dev:           cd app/web-app && npm run dev"
 echo "   Web app build:         cd app/web-app && npm run build"
 echo "   Database studio:       cd app/web-app && npm run db:studio"
