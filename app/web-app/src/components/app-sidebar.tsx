@@ -12,7 +12,6 @@ import {
   FolderOpen,
   Settings,
   HelpCircle,
-  History,
 } from "lucide-react"
 
 import {
@@ -64,11 +63,6 @@ const navigation = [
     name: "Support",
     href: "/support",
     icon: HelpCircle,
-  },
-  {
-    name: "Recording History",
-    href: "/recording-history",
-    icon: History,
   },
 ]
 
