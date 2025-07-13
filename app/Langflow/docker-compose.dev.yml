@@ -1,124 +1,90 @@
 version: '3.8'
 
 services:
-  # Langflow IDE for development with full UI
   langflow:
     image: langflowai/langflow:latest
-    container_name: andi-langflow-dev
-    restart: unless-stopped
+    container_name: andi_langflow_dev
     ports:
       - "7860:7860"
     environment:
-      # Database connection
-      - LANGFLOW_DATABASE_URL=postgresql://${LANGFLOW_POSTGRES_USER:-langflow_user}:${LANGFLOW_POSTGRES_PASSWORD:-langflow_dev_password}@langflow-postgres:5432/${LANGFLOW_POSTGRES_DB:-langflow_db}
-      
-      # Configuration
-      - LANGFLOW_CONFIG_DIR=/app/langflow
-      - LANGFLOW_SUPERUSER_EMAIL=${LANGFLOW_SUPERUSER_EMAIL:-admin@andi.local}
-      - LANGFLOW_SUPERUSER_PASSWORD=${LANGFLOW_SUPERUSER_PASSWORD:-langflow_admin}
-      - LANGFLOW_SECRET_KEY=${LANGFLOW_SECRET_KEY:-your-langflow-secret-key}
-      
-      # Development settings
-      - LANGFLOW_BACKEND_ONLY=false
-      - LANGFLOW_AUTO_LOGIN=false
-      - LANGFLOW_DEV=true
-      - LANGFLOW_LOG_LEVEL=${LOG_LEVEL:-info}
-      
-      # ANDI integration - Database connections for flows
-      - ANDI_DATABASE_URL=postgresql://${POSTGRES_USER:-andi_user}:${POSTGRES_PASSWORD:-andi_dev_password}@host.docker.internal:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-andi_db}
-      - ANDI_WAREHOUSE_URL=http://host.docker.internal:${CLICKHOUSE_PORT:-8123}
-      
-      # Sentry integration
-      - SENTRY_DSN=${SENTRY_DSN:-}
-      - SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-development}
-      - SENTRY_RELEASE=${SENTRY_RELEASE:-1.0.0-dev}
+      - LANGFLOW_DATABASE_URL=postgresql://langflow:langflow@langflow_db:5432/langflow
+      - LANGFLOW_AUTO_LOGIN=true
+      - LANGFLOW_SUPERUSER=admin@andi.local
+      - LANGFLOW_SUPERUSER_PASSWORD=langflow_admin
+      - LANGFLOW_SECRET_KEY=your-secret-key-here
+      - LANGFLOW_LOG_LEVEL=debug
+      - LANGFLOW_HOST=0.0.0.0
+      - LANGFLOW_PORT=7860
+      - LANGFLOW_OPEN_BROWSER=false
+      - LANGFLOW_REMOVE_API_KEYS=false
+      - LANGFLOW_SAVE_DB_IN_CONFIG_DIR=false
+      - LANGFLOW_LANGCHAIN_CACHE=InMemoryCache
+      # AI Service Keys (to be configured)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - ASSEMBLYAI_API_KEY=${ASSEMBLYAI_API_KEY:-}
     volumes:
-      - langflow-data:/app/langflow
-      - langflow-logs:/app/logs
       - ./flows:/app/flows
       - ./custom_components:/app/custom_components
+      - langflow_data:/app/langflow
     depends_on:
-      langflow-postgres:
-        condition: service_healthy
+      - langflow_db
+      - redis
     networks:
-      - andi-langflow
-      - andi-network
+      - langflow_network
+      - andi_network
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7860/api/v1/auto_login"]
+      test: ["CMD", "curl", "-f", "http://localhost:7860/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
-    labels:
-      - "com.andi.service=langflow"
-      - "com.andi.environment=development"
 
-  # Dedicated PostgreSQL for Langflow
-  langflow-postgres:
-    image: postgres:16
-    container_name: andi-langflow-postgres-dev
-    restart: unless-stopped
+  langflow_db:
+    image: postgres:15-alpine
+    container_name: andi_langflow_postgres
     environment:
-      - POSTGRES_DB=${LANGFLOW_POSTGRES_DB:-langflow_db}
-      - POSTGRES_USER=${LANGFLOW_POSTGRES_USER:-langflow_user}
-      - POSTGRES_PASSWORD=${LANGFLOW_POSTGRES_PASSWORD:-langflow_dev_password}
-      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256 --auth-local=scram-sha-256
+      - POSTGRES_DB=langflow
+      - POSTGRES_USER=langflow
+      - POSTGRES_PASSWORD=langflow
     volumes:
-      - langflow-postgres-data:/var/lib/postgresql/data
-      - ./init:/docker-entrypoint-initdb.d
+      - langflow_postgres_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"  # Different port to avoid conflict with main ANDI database
+      - "5433:5432"
     networks:
-      - andi-langflow
+      - langflow_network
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${LANGFLOW_POSTGRES_USER:-langflow_user} -d ${LANGFLOW_POSTGRES_DB:-langflow_db}"]
+      test: ["CMD-SHELL", "pg_isready -U langflow"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
-    labels:
-      - "com.andi.service=langflow-postgres"
-      - "com.andi.environment=development"
 
-  # Redis for caching and sessions (optional but recommended)
-  langflow-redis:
-    image: redis:7.2-alpine
-    container_name: andi-langflow-redis-dev
-    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    container_name: andi_langflow_redis
     ports:
-      - "6380:6379"  # Different port to avoid conflicts
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+      - "6380:6379"
     volumes:
-      - langflow-redis-data:/data
+      - langflow_redis_data:/data
     networks:
-      - andi-langflow
+      - langflow_network
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    labels:
-      - "com.andi.service=langflow-redis"
-      - "com.andi.environment=development"
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  langflow-data:
-    driver: local
-    name: andi-langflow-data-dev
-  langflow-logs:
-    driver: local
-    name: andi-langflow-logs-dev
-  langflow-postgres-data:
-    driver: local
-    name: andi-langflow-postgres-dev
-  langflow-redis-data:
-    driver: local
-    name: andi-langflow-redis-dev
+  langflow_data:
+  langflow_postgres_data:
+  langflow_redis_data:
 
 networks:
-  andi-langflow:
+  langflow_network:
     driver: bridge
-    name: andi-langflow-dev
-  andi-network:
+  andi_network:
     external: true
-    name: andi-network
+    name: app-database_andi-network
