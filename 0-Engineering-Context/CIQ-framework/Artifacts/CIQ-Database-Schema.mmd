@@ -1,0 +1,266 @@
+erDiagram
+    %% Core Tables
+    
+    Teacher {
+        UUID teacher_id PK
+        string email UK
+        string name
+        string profile_data
+        text experience_level
+        text instructional_style
+        text areas_for_growth
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    Classroom {
+        UUID classroom_id PK
+        UUID teacher_id FK
+        string classroom_name
+        string grade_level
+        string subject
+        integer class_size
+        text student_demographics
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    Student {
+        UUID student_id PK
+        string student_identifier
+        text grade_level
+        text demographic_data
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    ClassroomStudent {
+        UUID classroom_student_id PK
+        UUID classroom_id FK
+        UUID student_id FK
+        timestamp enrolled_at
+        timestamp unenrolled_at
+    }
+    
+    %% Recording and Analysis Tables
+    
+    RecordingSession {
+        UUID session_id PK
+        UUID classroom_id FK
+        UUID teacher_id FK
+        datetime session_date
+        time start_time
+        time end_time
+        integer duration_minutes
+        string recording_url
+        string transcript_url
+        string status
+        timestamp created_at
+        timestamp analyzed_at
+    }
+    
+    Transcript {
+        UUID transcript_id PK
+        UUID session_id FK
+        text full_transcript
+        json speaker_segments
+        json timestamp_data
+        timestamp created_at
+    }
+    
+    %% CIQ Score and Component Tables
+    
+    CIQScore {
+        UUID ciq_score_id PK
+        UUID session_id FK
+        UUID classroom_id FK
+        datetime calculation_date
+        float overall_score
+        json adaptive_weights
+        json component_scores
+        timestamp created_at
+    }
+    
+    %% Engagement Markers (Data Inputs)
+    
+    SISLMSData {
+        UUID sis_lms_id PK
+        UUID classroom_id FK
+        UUID student_id FK
+        datetime data_date
+        float academic_score
+        text sel_behavioral_data
+        integer attendance_days
+        float attendance_rate
+        json participation_metrics
+        timestamp created_at
+    }
+    
+    SurveyResponse {
+        UUID survey_id PK
+        UUID classroom_id FK
+        UUID respondent_id FK
+        string respondent_type
+        datetime survey_date
+        json responses
+        float teacher_confidence
+        float teacher_satisfaction
+        float student_wellbeing
+        float student_belonging
+        timestamp created_at
+    }
+    
+    %% ECI Blueprint Analysis
+    
+    ECIAnalysis {
+        UUID eci_analysis_id PK
+        UUID session_id FK
+        datetime analysis_date
+        json equity_indicators
+        json creativity_indicators
+        json innovation_indicators
+        timestamp created_at
+    }
+    
+    EquityAnalysis {
+        UUID equity_analysis_id PK
+        UUID eci_analysis_id FK
+        float psychological_safety_score
+        float access_score
+        float voice_elevation_score
+        float collaboration_score
+        float empathy_score
+        json detailed_findings
+        timestamp created_at
+    }
+    
+    CreativityAnalysis {
+        UUID creativity_analysis_id PK
+        UUID eci_analysis_id FK
+        float self_expression_score
+        float experimentation_score
+        float skill_development_score
+        float practice_improvement_score
+        float imagination_score
+        json detailed_findings
+        timestamp created_at
+    }
+    
+    InnovationAnalysis {
+        UUID innovation_analysis_id PK
+        UUID eci_analysis_id FK
+        float possibility_mindset_score
+        float real_world_connection_score
+        float change_making_score
+        float impact_assessment_score
+        float continuous_improvement_score
+        json detailed_findings
+        timestamp created_at
+    }
+    
+    %% Participation Metrics Detail
+    
+    ParticipationMetrics {
+        UUID participation_id PK
+        UUID session_id FK
+        UUID classroom_id FK
+        float teacher_talk_percentage
+        float student_talk_percentage
+        json bloom_taxonomy_levels
+        json sentiment_analysis
+        integer student_questions_count
+        integer teacher_questions_count
+        json turn_taking_patterns
+        timestamp created_at
+    }
+    
+    %% Teacher Goals and Adaptive Weighting
+    
+    TeacherGoal {
+        UUID goal_id PK
+        UUID teacher_id FK
+        string goal_type
+        text goal_description
+        string focus_area
+        date start_date
+        date target_date
+        string status
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    AdaptiveWeightHistory {
+        UUID weight_history_id PK
+        UUID classroom_id FK
+        datetime effective_date
+        json weight_configuration
+        text adjustment_reason
+        timestamp created_at
+    }
+    
+    %% AI Insights and Recommendations
+    
+    AIInsight {
+        UUID insight_id PK
+        UUID session_id FK
+        UUID classroom_id FK
+        string insight_type
+        text insight_content
+        string related_eci_component
+        float confidence_score
+        json supporting_evidence
+        timestamp created_at
+    }
+    
+    Recommendation {
+        UUID recommendation_id PK
+        UUID insight_id FK
+        UUID teacher_id FK
+        text recommendation_text
+        string priority_level
+        string recommendation_type
+        json action_steps
+        boolean is_implemented
+        timestamp created_at
+        timestamp implemented_at
+    }
+    
+    %% Progress Tracking
+    
+    ProgressTracking {
+        UUID progress_id PK
+        UUID classroom_id FK
+        UUID teacher_id FK
+        string metric_type
+        float baseline_value
+        float current_value
+        float target_value
+        date measurement_date
+        json trend_data
+        timestamp created_at
+    }
+    
+    %% Relationships
+    
+    Teacher ||--o{ Classroom : teaches
+    Classroom ||--o{ ClassroomStudent : contains
+    Student ||--o{ ClassroomStudent : enrolled_in
+    Classroom ||--o{ RecordingSession : has
+    Teacher ||--o{ RecordingSession : conducts
+    RecordingSession ||--|| Transcript : generates
+    RecordingSession ||--|| CIQScore : produces
+    RecordingSession ||--|| ECIAnalysis : analyzed_for
+    RecordingSession ||--o{ ParticipationMetrics : measured_in
+    Classroom ||--o{ SISLMSData : tracked_in
+    Student ||--o{ SISLMSData : has_data
+    Classroom ||--o{ SurveyResponse : collected_for
+    ECIAnalysis ||--|| EquityAnalysis : contains
+    ECIAnalysis ||--|| CreativityAnalysis : contains
+    ECIAnalysis ||--|| InnovationAnalysis : contains
+    Teacher ||--o{ TeacherGoal : sets
+    Classroom ||--o{ AdaptiveWeightHistory : configured_for
+    RecordingSession ||--o{ AIInsight : generates
+    AIInsight ||--o{ Recommendation : produces
+    Teacher ||--o{ Recommendation : receives
+    Classroom ||--o{ ProgressTracking : monitored_by
+    Teacher ||--o{ ProgressTracking : tracked_for

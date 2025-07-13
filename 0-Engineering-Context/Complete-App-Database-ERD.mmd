@@ -1,0 +1,911 @@
+erDiagram
+    %% ANDI Application Database - Complete Entity Relationship Diagram
+    %% Updated: July 2025 - Includes full CIQ framework implementation
+    %% Total Tables: 47 across 5 schemas + survey/integration tables
+
+    %% ========================================
+    %% AUTH SCHEMA - Authentication & Users
+    %% ========================================
+    
+    auth_users {
+        UUID id PK
+        string email UK
+        string name
+        user_role role
+        boolean email_verified
+        timestamp email_verified_at
+        string image
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    auth_password_reset_tokens {
+        UUID id PK
+        UUID user_id FK
+        string token UK
+        timestamp expires_at
+        timestamp created_at
+    }
+
+    %% ========================================
+    %% CORE SCHEMA - Core Business Logic
+    %% ========================================
+
+    %% Organizational Structure
+    core_districts {
+        UUID id PK
+        string name
+        string state
+        string contact_email
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_schools {
+        UUID id PK
+        string name
+        UUID district_id FK
+        school_type school_type
+        string address
+        string phone
+        string contact_email
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_teacher_profiles {
+        UUID user_id PK
+        UUID school_id FK
+        text_array grades_taught
+        text_array subjects_taught
+        integer years_experience
+        text_array teaching_styles
+        text_array personal_interests
+        text_array strengths
+        string voice_sample_url
+        boolean onboarding_completed
+        jsonb preferences
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_coach_profiles {
+        UUID user_id PK
+        UUID district_id FK
+        UUID school_id FK
+        text_array specializations
+        integer years_experience
+        text_array coaching_styles
+        jsonb availability
+        string bio
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_coach_teacher_assignments {
+        UUID assignment_id PK
+        UUID coach_id FK
+        UUID teacher_id FK
+        date start_date
+        date end_date
+        boolean is_active
+        jsonb assignment_details
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% Student Management System (v1.2.0)
+    core_students {
+        UUID student_id PK
+        string student_identifier UK
+        UUID district_id FK
+        UUID school_id FK
+        string first_name
+        string last_name
+        string grade_level
+        date date_of_birth
+        date enrollment_date
+        date graduation_date
+        boolean is_active
+        jsonb demographic_data
+        jsonb special_needs
+        jsonb emergency_contact
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_classrooms {
+        UUID classroom_id PK
+        UUID teacher_id FK
+        UUID school_id FK
+        string classroom_name
+        string subject
+        string grade_level
+        string academic_year
+        string semester
+        string class_period
+        string room_number
+        integer max_capacity
+        jsonb class_schedule
+        jsonb curriculum_standards
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_classroom_enrollments {
+        UUID enrollment_id PK
+        UUID classroom_id FK
+        UUID student_id FK
+        date enrollment_date
+        date withdrawal_date
+        string enrollment_status
+        integer seat_number
+        jsonb special_accommodations
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_student_academic_records {
+        UUID record_id PK
+        UUID student_id FK
+        UUID classroom_id FK
+        string academic_year
+        string semester
+        string current_grade
+        decimal grade_percentage
+        jsonb assignment_scores
+        jsonb test_scores
+        jsonb project_scores
+        string participation_grade
+        string effort_grade
+        jsonb learning_objectives_met
+        jsonb skill_assessments
+        jsonb growth_measurements
+        text teacher_comments
+        text parent_comments
+        text student_reflection
+        date recorded_date
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_student_attendance {
+        UUID attendance_id PK
+        UUID student_id FK
+        UUID classroom_id FK
+        date attendance_date
+        string status
+        time arrival_time
+        time departure_time
+        integer minutes_present
+        integer total_minutes
+        string reason
+        boolean parent_notified
+        boolean makeup_work_assigned
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_student_behavior_records {
+        UUID behavior_id PK
+        UUID student_id FK
+        UUID classroom_id FK
+        UUID recorded_by FK
+        date incident_date
+        time incident_time
+        string behavior_type
+        string behavior_category
+        text behavior_description
+        integer severity_level
+        text classroom_context
+        text antecedent
+        text consequence
+        string intervention_used
+        boolean parent_contacted
+        boolean follow_up_required
+        date follow_up_date
+        text resolution_notes
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% Goals & Development
+    core_teacher_goals {
+        UUID goal_id PK
+        UUID teacher_id FK
+        string title
+        text description
+        goal_type type
+        goal_category category
+        date target_date
+        goal_status status
+        integer priority
+        jsonb success_criteria
+        jsonb resources_needed
+        text notes
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_goal_progress_logs {
+        UUID log_id PK
+        UUID goal_id FK
+        UUID session_id FK
+        text progress_description
+        integer completion_percentage
+        jsonb metrics
+        text challenges
+        text next_steps
+        timestamp logged_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% Audio & Sessions
+    core_audio_sessions {
+        UUID id PK
+        UUID teacher_id FK
+        string title
+        date session_date
+        integer duration_seconds
+        session_status status
+        session_source source
+        string audio_file_url
+        text transcript
+        jsonb metadata
+        text session_notes
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_audio_uploads {
+        UUID id PK
+        UUID session_id FK
+        string filename
+        string file_path
+        integer file_size
+        string content_type
+        upload_status status
+        jsonb upload_metadata
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_key_moments {
+        UUID id PK
+        UUID session_id FK
+        string title
+        text description
+        integer start_time
+        integer end_time
+        string moment_type
+        jsonb analysis_data
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% Recommendations & Content
+    core_recommendations {
+        UUID recommendation_id PK
+        UUID teacher_id FK
+        UUID session_id FK
+        string title
+        text description
+        recommendation_category category
+        string priority
+        text implementation_steps
+        boolean is_read
+        boolean is_implemented
+        text feedback
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_classroom_activities {
+        UUID activity_id PK
+        UUID teacher_id FK
+        string title
+        text description
+        string subject
+        string grade_level
+        integer duration_minutes
+        jsonb materials_needed
+        jsonb instructions
+        text learning_objectives
+        jsonb tags
+        boolean is_public
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_resources {
+        UUID resource_id PK
+        UUID created_by FK
+        string title
+        text description
+        resource_type type
+        string file_url
+        jsonb metadata
+        text_array tags
+        boolean is_featured
+        integer view_count
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_resource_interactions {
+        UUID interaction_id PK
+        UUID resource_id FK
+        UUID user_id FK
+        interaction_type type
+        jsonb interaction_data
+        timestamp created_at
+    }
+
+    %% Communication
+    core_conversations {
+        UUID conversation_id PK
+        UUID session_id FK
+        UUID teacher_id FK
+        UUID coach_id FK
+        string subject
+        text last_message
+        timestamp last_message_at
+        boolean is_read_by_teacher
+        boolean is_read_by_coach
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    core_notifications {
+        UUID notification_id PK
+        UUID user_id FK
+        string title
+        text message
+        notification_type type
+        jsonb data
+        boolean is_read
+        timestamp read_at
+        timestamp created_at
+    }
+
+    %% ========================================
+    %% ANALYTICS SCHEMA - Performance & CIQ
+    %% ========================================
+    
+    analytics_ciq_metrics {
+        UUID id PK
+        UUID session_id FK
+        UUID teacher_id FK
+        UUID classroom_id FK
+        date calculation_date
+        decimal equity_score
+        decimal creativity_score
+        decimal innovation_score
+        decimal overall_score
+        framework_type framework_type
+        decimal teacher_talk_percentage
+        decimal student_talk_percentage
+        integer question_count
+        decimal wait_time_avg
+        jsonb equity_details
+        jsonb creativity_details
+        jsonb innovation_details
+        decimal talk_time_ratio
+        jsonb question_metrics
+        jsonb radar_data
+        jsonb eci_detailed_scores
+        jsonb adaptive_weights
+        jsonb calculation_metadata
+        jsonb data_source_weights
+        jsonb quality_indicators
+        timestamp calculated_at
+        timestamp created_at
+    }
+    
+    analytics_eci_component_scores {
+        UUID component_score_id PK
+        UUID session_id FK
+        UUID classroom_id FK
+        UUID teacher_id FK
+        date calculation_date
+        decimal e1_identity_recognition
+        decimal e2_psychological_safety
+        decimal e3_access_equity
+        decimal e4_voice_elevation
+        decimal e5_collaboration
+        decimal c6_self_expression
+        decimal c7_experimentation
+        decimal c8_active_learning
+        decimal c9_skill_development
+        decimal c10_imagination
+        decimal i11_possibility_mindset
+        decimal i12_real_world_connections
+        decimal i13_change_making
+        decimal i14_impact_assessment
+        decimal i15_continuous_improvement
+        decimal equity_avg
+        decimal creativity_avg
+        decimal innovation_avg
+        decimal analyzer_confidence
+        decimal transcript_quality_score
+        integer analysis_duration_ms
+        string llm_model_version
+        jsonb analysis_prompts_used
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    analytics_ciq_adaptive_weights {
+        UUID weight_config_id PK
+        UUID classroom_id FK
+        UUID teacher_id FK
+        date effective_start_date
+        date effective_end_date
+        boolean is_active
+        decimal sis_lms_weight
+        decimal survey_weight
+        decimal eci_blueprint_weight
+        decimal equity_component_weight
+        decimal creativity_component_weight
+        decimal innovation_component_weight
+        jsonb eci_element_weights
+        jsonb teacher_goals
+        jsonb classroom_context
+        text customization_reason
+        UUID configured_by FK
+        UUID approved_by FK
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    analytics_teacher_performance_summary {
+        UUID summary_id PK
+        UUID teacher_id FK
+        date summary_date
+        string period_type
+        decimal avg_ciq_score
+        decimal avg_equity_score
+        decimal avg_creativity_score
+        decimal avg_innovation_score
+        integer total_sessions
+        string performance_trend
+        jsonb key_strengths
+        jsonb improvement_areas
+        jsonb recommendations
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    analytics_reports {
+        UUID report_id PK
+        UUID generated_for FK
+        string report_type
+        jsonb report_data
+        date start_date
+        date end_date
+        string status
+        string file_url
+        timestamp created_at
+    }
+
+    %% ========================================
+    %% COMMUNITY SCHEMA - Forum & Social
+    %% ========================================
+    
+    community_forum_questions {
+        UUID question_id PK
+        UUID author_id FK
+        string title
+        text content
+        text_array tags
+        integer view_count
+        integer answer_count
+        boolean is_answered
+        boolean is_featured
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    community_forum_answers {
+        UUID answer_id PK
+        UUID question_id FK
+        UUID author_id FK
+        text content
+        boolean is_accepted
+        integer vote_score
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    community_forum_votes {
+        UUID vote_id PK
+        UUID user_id FK
+        UUID answer_id FK
+        vote_type vote_type
+        timestamp created_at
+    }
+    
+    community_forum_bookmarks {
+        UUID bookmark_id PK
+        UUID user_id FK
+        UUID question_id FK
+        timestamp created_at
+    }
+
+    %% ========================================
+    %% GAMIFICATION SCHEMA - Achievements & Trivia
+    %% ========================================
+    
+    gamification_achievements {
+        UUID achievement_id PK
+        string name
+        text description
+        string icon
+        string category
+        integer points
+        jsonb criteria
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    gamification_user_achievements {
+        UUID user_achievement_id PK
+        UUID user_id FK
+        UUID achievement_id FK
+        integer progress
+        boolean is_completed
+        timestamp completed_at
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    gamification_trivia_questions {
+        UUID question_id PK
+        text question
+        jsonb options
+        string correct_answer
+        string category
+        string difficulty
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    gamification_user_trivia_responses {
+        UUID response_id PK
+        UUID user_id FK
+        UUID question_id FK
+        string selected_answer
+        boolean is_correct
+        integer points_earned
+        timestamp created_at
+    }
+
+    %% ========================================
+    %% SURVEY INFRASTRUCTURE (v1.2.1)
+    %% ========================================
+    
+    surveys {
+        UUID survey_id PK
+        string title
+        text description
+        survey_type survey_type
+        string target_audience
+        text_array grade_levels
+        text_array subjects
+        uuid_array school_ids
+        uuid_array district_ids
+        date start_date
+        date end_date
+        integer reminder_frequency
+        integer max_reminders
+        integer estimated_duration
+        boolean is_anonymous
+        boolean is_mandatory
+        boolean allow_partial_responses
+        survey_status status
+        UUID created_by FK
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    survey_questions {
+        UUID question_id PK
+        UUID survey_id FK
+        text question_text
+        question_type question_type
+        integer question_order
+        boolean is_required
+        string section_title
+        jsonb options
+        jsonb validation_rules
+        jsonb conditional_logic
+        string likert_scale_type
+        integer min_value
+        integer max_value
+        jsonb scale_labels
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    survey_assignments {
+        UUID assignment_id PK
+        UUID survey_id FK
+        UUID assigned_to_user_id FK
+        string assigned_to_role
+        UUID classroom_id FK
+        UUID school_id FK
+        UUID district_id FK
+        date assigned_date
+        date due_date
+        integer reminders_sent
+        date last_reminder_date
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    survey_responses {
+        UUID response_id PK
+        UUID survey_id FK
+        UUID assignment_id FK
+        UUID respondent_user_id FK
+        string respondent_role
+        jsonb respondent_metadata
+        response_status status
+        timestamp start_time
+        timestamp completion_time
+        integer time_spent_minutes
+        jsonb responses
+        decimal completion_percentage
+        jsonb session_context
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    question_responses {
+        UUID question_response_id PK
+        UUID response_id FK
+        UUID question_id FK
+        text text_response
+        decimal numeric_response
+        boolean boolean_response
+        jsonb json_response
+        integer response_time_seconds
+        integer revision_count
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% ========================================
+    %% SIS/LMS INTEGRATION (v1.2.2)
+    %% ========================================
+    
+    external_system_integrations {
+        UUID integration_id PK
+        UUID district_id FK
+        UUID school_id FK
+        string system_name
+        string system_vendor
+        integration_type integration_type
+        string system_version
+        string base_url
+        string api_endpoint
+        string authentication_method
+        jsonb authentication_config
+        jsonb field_mappings
+        jsonb data_filters
+        jsonb transformation_rules
+        sync_frequency sync_frequency
+        string sync_schedule
+        timestamp last_successful_sync
+        timestamp next_scheduled_sync
+        integration_status status
+        integer error_count
+        text last_error_message
+        timestamp last_error_time
+        UUID configured_by FK
+        UUID approved_by FK
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    data_sync_logs {
+        UUID sync_id PK
+        UUID integration_id FK
+        string sync_type
+        text_array data_types
+        string sync_trigger
+        timestamp start_time
+        timestamp end_time
+        data_sync_status status
+        integer records_attempted
+        integer records_successful
+        integer records_failed
+        integer records_skipped
+        jsonb error_details
+        jsonb warning_details
+        integer retry_count
+        integer max_retries
+        integer execution_time_ms
+        decimal memory_usage_mb
+        integer api_calls_made
+        jsonb changes_summary
+        text_array affected_tables
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    external_data_mappings {
+        UUID mapping_id PK
+        UUID integration_id FK
+        string external_id
+        string external_type
+        jsonb external_metadata
+        UUID internal_id
+        string internal_table
+        timestamp first_mapped_date
+        timestamp last_verified_date
+        decimal mapping_confidence
+        boolean is_active
+        decimal data_quality_score
+        jsonb quality_issues
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    gradebook_integration_data {
+        UUID gradebook_entry_id PK
+        UUID integration_id FK
+        string external_gradebook_id
+        UUID student_id FK
+        UUID classroom_id FK
+        string external_student_id
+        string external_class_id
+        string assignment_name
+        string assignment_type
+        string assignment_category
+        date assignment_date
+        date due_date
+        decimal points_earned
+        decimal points_possible
+        decimal percentage_score
+        string letter_grade
+        text_array learning_standards
+        text_array learning_objectives
+        string bloom_taxonomy_level
+        text teacher_comments
+        string submission_status
+        timestamp submission_date
+        timestamp last_synced
+        integer sync_version
+        timestamp external_last_modified
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    attendance_integration_data {
+        UUID attendance_entry_id PK
+        UUID integration_id FK
+        string external_attendance_id
+        UUID student_id FK
+        UUID classroom_id FK
+        string external_student_id
+        string external_class_id
+        date attendance_date
+        string period_name
+        string status
+        time arrival_time
+        time departure_time
+        string reason_code
+        text reason_description
+        boolean parent_verification
+        boolean office_verification
+        timestamp last_synced
+        integer sync_version
+        timestamp external_last_modified
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% ========================================
+    %% FOREIGN KEY RELATIONSHIPS
+    %% ========================================
+
+    %% Auth Relationships
+    auth_users ||--o| core_teacher_profiles : "has profile"
+    auth_users ||--o| core_coach_profiles : "has profile"
+    auth_users ||--o{ core_audio_sessions : "creates"
+    auth_users ||--o{ core_teacher_goals : "sets"
+    auth_users ||--o{ analytics_ciq_metrics : "generates"
+    auth_users ||--o{ core_recommendations : "receives"
+    auth_users ||--o{ core_resources : "creates"
+    auth_users ||--o{ core_resource_interactions : "interacts"
+    auth_users ||--o{ core_notifications : "receives"
+    auth_users ||--o{ community_forum_questions : "asks"
+    auth_users ||--o{ community_forum_answers : "answers"
+    auth_users ||--o{ community_forum_votes : "votes"
+    auth_users ||--o{ community_forum_bookmarks : "bookmarks"
+    auth_users ||--o{ gamification_user_achievements : "earns"
+    auth_users ||--o{ gamification_user_trivia_responses : "responds"
+    auth_users ||--o{ surveys : "creates"
+    auth_users ||--o{ survey_assignments : "assigned"
+    auth_users ||--o{ survey_responses : "responds"
+    auth_users ||--o{ external_system_integrations : "configures"
+    auth_password_reset_tokens }o--|| auth_users : "resets"
+
+    %% Organizational Hierarchy
+    core_districts ||--o{ core_schools : "contains"
+    core_districts ||--o{ core_students : "enrolls"
+    core_districts ||--o{ core_coach_profiles : "employs"
+    core_districts ||--o{ external_system_integrations : "integrates"
+    
+    core_schools ||--o{ core_teacher_profiles : "employs"
+    core_schools ||--o{ core_coach_profiles : "assigns"
+    core_schools ||--o{ core_classrooms : "houses"
+    core_schools ||--o{ core_students : "enrolls"
+    core_schools ||--o{ survey_assignments : "targets"
+    core_schools ||--o{ external_system_integrations : "integrates"
+
+    %% Teacher-Coach Relationships
+    core_teacher_profiles ||--o{ core_coach_teacher_assignments : "assigned to"
+    core_coach_profiles ||--o{ core_coach_teacher_assignments : "assigned"
+    core_teacher_profiles ||--o{ core_classrooms : "teaches"
+    core_teacher_profiles ||--o{ analytics_ciq_adaptive_weights : "customizes"
+
+    %% Student Management System
+    core_students ||--o{ core_classroom_enrollments : "enrolled in"
+    core_classrooms ||--o{ core_classroom_enrollments : "contains"
+    core_students ||--o{ core_student_academic_records : "has records"
+    core_students ||--o{ core_student_attendance : "attends"
+    core_students ||--o{ core_student_behavior_records : "exhibits"
+    core_classrooms ||--o{ core_student_academic_records : "grades in"
+    core_classrooms ||--o{ core_student_attendance : "tracks in"
+    core_classrooms ||--o{ core_student_behavior_records : "occurs in"
+    auth_users ||--o{ core_student_behavior_records : "records"
+
+    %% Audio & Session Relationships
+    core_audio_sessions ||--o{ core_audio_uploads : "uploaded"
+    core_audio_sessions ||--o{ core_key_moments : "contains"
+    core_audio_sessions ||--o| analytics_ciq_metrics : "analyzed"
+    core_audio_sessions ||--o| analytics_eci_component_scores : "scored"
+    core_audio_sessions ||--o{ core_recommendations : "generates"
+    core_audio_sessions ||--o{ core_conversations : "discusses"
+    core_audio_sessions ||--o{ core_goal_progress_logs : "tracks progress"
+
+    %% CIQ Analytics Chain
+    analytics_ciq_metrics ||--|| analytics_eci_component_scores : "detailed by"
+    core_classrooms ||--o| analytics_ciq_adaptive_weights : "configured for"
+    analytics_ciq_adaptive_weights }o--|| core_teacher_profiles : "customized by"
+
+    %% Goal System
+    core_teacher_goals ||--o{ core_goal_progress_logs : "tracked by"
+
+    %% Community Features
+    community_forum_questions ||--o{ community_forum_answers : "answered by"
+    community_forum_answers ||--o{ community_forum_votes : "voted on"
+    community_forum_questions ||--o{ community_forum_bookmarks : "bookmarked"
+
+    %% Gamification
+    gamification_achievements ||--o{ gamification_user_achievements : "earned"
+    gamification_trivia_questions ||--o{ gamification_user_trivia_responses : "answered"
+
+    %% Survey System
+    surveys ||--o{ survey_questions : "contains"
+    surveys ||--o{ survey_assignments : "assigned"
+    surveys ||--o{ survey_responses : "completed"
+    survey_assignments ||--o{ survey_responses : "generates"
+    survey_responses ||--o{ question_responses : "contains"
+    survey_questions ||--o{ question_responses : "answered"
+    core_classrooms ||--o{ survey_assignments : "targets"
+
+    %% SIS/LMS Integration
+    external_system_integrations ||--o{ data_sync_logs : "logs"
+    external_system_integrations ||--o{ external_data_mappings : "maps"
+    external_system_integrations ||--o{ gradebook_integration_data : "syncs"
+    external_system_integrations ||--o{ attendance_integration_data : "syncs"
+    core_students ||--o{ gradebook_integration_data : "has grades"
+    core_students ||--o{ attendance_integration_data : "has attendance"
+    core_classrooms ||--o{ gradebook_integration_data : "contains grades"
+    core_classrooms ||--o{ attendance_integration_data : "tracks attendance"

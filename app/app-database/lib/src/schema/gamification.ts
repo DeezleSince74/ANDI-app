@@ -21,7 +21,7 @@ export const gamificationSchema = pgSchema('gamification');
 // Enums
 export const achievementTypeEnum = pgEnum('achievement_type', ['practice_prodigy', 'consistency', 'engagement', 'community', 'milestone']);
 export const triviaCategoryEnum = pgEnum('trivia_category', ['teaching_techniques', 'student_engagement', 'classroom_management', 'wait_time']);
-export const difficultyLevelEnum = pgEnum('difficulty_level', ['easy', 'medium', 'hard']);
+export const triviaDifficultyEnum = pgEnum('trivia_difficulty', ['easy', 'medium', 'hard']);
 
 // Gamification & Achievements
 export const achievements = gamificationSchema.table('achievements', {
@@ -75,7 +75,7 @@ export const triviaQuestions = gamificationSchema.table('trivia_questions', {
   correctAnswerIndex: integer('correct_answer_index').notNull(),
   explanation: text('explanation'),
   category: triviaCategoryEnum('category').notNull(),
-  difficulty: difficultyLevelEnum('difficulty').notNull(),
+  difficulty: triviaDifficultyEnum('difficulty').notNull(),
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({

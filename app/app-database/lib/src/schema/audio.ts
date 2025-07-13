@@ -18,7 +18,7 @@ import { users } from './auth';
 import { teacherGoals, sessionStatusEnum, sessionSourceEnum, uploadStatusEnum, momentTypeEnum } from './core';
 
 // Use core schema for audio-related tables
-export const coreSchema = pgSchema('core');
+const coreSchema = pgSchema('core');
 
 // Audio Processing & Sessions
 export const audioSessions = coreSchema.table('audio_sessions', {

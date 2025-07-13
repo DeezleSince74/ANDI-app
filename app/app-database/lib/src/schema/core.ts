@@ -35,7 +35,7 @@ export const resourceCategoryEnum = pgEnum('resource_category', ['student_engage
 export const interactionTypeEnum = pgEnum('interaction_type', ['view', 'like', 'bookmark', 'share']);
 export const notificationTypeEnum = pgEnum('notification_type', ['session_processed', 'recommendation_ready', 'achievement_unlocked', 'forum_answer', 'report_ready']);
 export const senderTypeEnum = pgEnum('sender_type', ['teacher', 'coach']);
-export const difficultyLevelEnum = pgEnum('difficulty_level', ['beginner', 'intermediate', 'advanced']);
+export const resourceDifficultyEnum = pgEnum('resource_difficulty_level', ['beginner', 'intermediate', 'advanced']);
 
 // Organizational Structure
 export const districts = coreSchema.table('districts', {

@@ -6,36 +6,82 @@ export * from './analytics';
 export * from './community';
 export * from './gamification';
 export * from './resources';
+export * from './ciq';
 
 // Re-export commonly used types for convenience
 export type {
   User,
   NewUser,
+} from './auth';
+
+export type {
   TeacherProfile,
   NewTeacherProfile,
   CoachProfile,
   NewCoachProfile,
-  AudioSession,
-  NewAudioSession,
-  CiqMetric,
-  NewCiqMetric,
-  ForumQuestion,
-  NewForumQuestion,
-  Achievement,
-  NewAchievement,
-  Resource,
-  NewResource,
-} from './auth';
+} from './core';
 
 export type {
-  TeacherGoal,
-  NewTeacherGoal,
+  AudioSession,
+  NewAudioSession,
   Recommendation,
   NewRecommendation,
   ClassroomActivity,
   NewClassroomActivity,
   Notification,
   NewNotification,
+} from './audio';
+
+export type {
+  CiqMetric,
+  NewCiqMetric,
+} from './analytics';
+
+export type {
+  ForumQuestion,
+  NewForumQuestion,
+} from './community';
+
+export type {
+  Achievement,
+  NewAchievement,
+} from './gamification';
+
+export type {
+  Resource,
+  NewResource,
+} from './resources';
+
+export type {
+  Student,
+  NewStudent,
+  Classroom,
+  NewClassroom,
+  ClassroomEnrollment,
+  NewClassroomEnrollment,
+  StudentAcademicRecord,
+  NewStudentAcademicRecord,
+  StudentAttendance,
+  NewStudentAttendance,
+  StudentBehaviorRecord,
+  NewStudentBehaviorRecord,
+  Survey,
+  NewSurvey,
+  SurveyQuestion,
+  NewSurveyQuestion,
+  SurveyResponse,
+  NewSurveyResponse,
+  EciComponentScore,
+  NewEciComponentScore,
+  CiqAdaptiveWeight,
+  NewCiqAdaptiveWeight,
+  ExternalSystemIntegration,
+  NewExternalSystemIntegration,
+} from './ciq';
+
+export type {
+  TeacherGoal,
+  NewTeacherGoal,
 } from './core';
 
 export type {
@@ -115,4 +161,21 @@ export const gamificationTables = {
 export const resourceTables = {
   resources: import('./resources').then(m => m.resources),
   resourceInteractions: import('./resources').then(m => m.resourceInteractions),
+};
+
+export const ciqTables = {
+  students: import('./ciq').then(m => m.students),
+  classrooms: import('./ciq').then(m => m.classrooms),
+  classroomEnrollments: import('./ciq').then(m => m.classroomEnrollments),
+  studentAcademicRecords: import('./ciq').then(m => m.studentAcademicRecords),
+  studentAttendance: import('./ciq').then(m => m.studentAttendance),
+  studentBehaviorRecords: import('./ciq').then(m => m.studentBehaviorRecords),
+  surveys: import('./ciq').then(m => m.surveys),
+  surveyQuestions: import('./ciq').then(m => m.surveyQuestions),
+  surveyAssignments: import('./ciq').then(m => m.surveyAssignments),
+  surveyResponses: import('./ciq').then(m => m.surveyResponses),
+  questionResponses: import('./ciq').then(m => m.questionResponses),
+  externalSystemIntegrations: import('./ciq').then(m => m.externalSystemIntegrations),
+  eciComponentScores: import('./ciq').then(m => m.eciComponentScores),
+  ciqAdaptiveWeights: import('./ciq').then(m => m.ciqAdaptiveWeights),
 };

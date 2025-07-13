@@ -15,6 +15,7 @@ import {
   foreignKey,
   unique
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { users } from './auth';
 import { audioSessions } from './audio';
 
@@ -33,23 +34,36 @@ export const ciqMetrics = analyticsSchema.table('ciq_metrics', {
   id: uuid('id').primaryKey().defaultRandom(),
   sessionId: uuid('session_id').notNull(),
   teacherId: uuid('teacher_id').notNull(),
+  classroomId: uuid('classroom_id'),
+  calculationDate: date('calculation_date').default(sql`CURRENT_DATE`),
   equityScore: numeric('equity_score', { precision: 5, scale: 2 }),
   creativityScore: numeric('creativity_score', { precision: 5, scale: 2 }),
   innovationScore: numeric('innovation_score', { precision: 5, scale: 2 }),
   overallScore: numeric('overall_score', { precision: 5, scale: 2 }),
   frameworkType: frameworkTypeEnum('framework_type').notNull().default('eci'),
+  teacherTalkPercentage: numeric('teacher_talk_percentage', { precision: 5, scale: 2 }),
+  studentTalkPercentage: numeric('student_talk_percentage', { precision: 5, scale: 2 }),
+  questionCount: integer('question_count'),
+  waitTimeAvg: numeric('wait_time_avg', { precision: 5, scale: 2 }),
   equityDetails: jsonb('equity_details').default({}),
   creativityDetails: jsonb('creativity_details').default({}),
   innovationDetails: jsonb('innovation_details').default({}),
   talkTimeRatio: numeric('talk_time_ratio', { precision: 5, scale: 2 }),
   questionMetrics: jsonb('question_metrics').default({}),
   radarData: jsonb('radar_data').default({}),
+  eciDetailedScores: jsonb('eci_detailed_scores').default({}),
+  adaptiveWeights: jsonb('adaptive_weights').default({}),
+  calculationMetadata: jsonb('calculation_metadata').default({}),
+  dataSourceWeights: jsonb('data_source_weights').default({}),
+  qualityIndicators: jsonb('quality_indicators').default({}),
   calculatedAt: timestamp('calculated_at', { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   sessionIdIdx: index('idx_ciq_metrics_session_id').on(table.sessionId),
   teacherIdIdx: index('idx_ciq_metrics_teacher_id').on(table.teacherId),
+  classroomIdIdx: index('idx_ciq_metrics_classroom_id').on(table.classroomId),
   calculatedAtIdx: index('idx_ciq_metrics_calculated_at').on(table.calculatedAt),
+  calculationDateIdx: index('idx_ciq_metrics_calculation_date').on(table.calculationDate),
   scoresIdx: index('idx_ciq_metrics_scores').on(table.equityScore, table.creativityScore, table.innovationScore),
   uniqueSession: unique('ciq_metrics_session_id_key').on(table.sessionId),
   sessionIdFk: foreignKey({

@@ -15,7 +15,7 @@ import { users } from './auth';
 import { resourceTypeEnum, resourceCategoryEnum, interactionTypeEnum } from './core';
 
 // Use core schema for resources
-export const coreSchema = pgSchema('core');
+const coreSchema = pgSchema('core');
 
 // Resources & Content Library
 export const resources = coreSchema.table('resources', {
