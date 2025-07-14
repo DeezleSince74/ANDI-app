@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { imageUpload, runMiddleware } from "~/lib/multer-config"
+// import { imageUpload, runMiddleware } from "~/lib/multer-config"
 import { saveImage } from "~/lib/storage"
 import { auth } from "~/server/auth"
 

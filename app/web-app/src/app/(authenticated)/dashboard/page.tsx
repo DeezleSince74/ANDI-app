@@ -43,7 +43,8 @@ const triviaQuestions = [
 ]
 
 export default async function DashboardPage() {
-  const session = await auth()
+  // Authentication is handled by the layout, session available if needed
+  // const session = await auth()
 
   return (
     <div className="space-y-6">

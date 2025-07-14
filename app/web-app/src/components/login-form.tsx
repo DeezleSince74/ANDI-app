@@ -18,7 +18,7 @@ import { Separator } from "~/components/ui/separator"
 import { Globe, Building, Mail, Loader2 } from "lucide-react"
 
 export function LoginForm() {
-  const router = useRouter()
+  // const router = useRouter()
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState<string | null>(null)
   const [rememberMe, setRememberMe] = useState(false)

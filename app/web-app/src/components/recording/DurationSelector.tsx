@@ -70,7 +70,7 @@ export function DurationSelector({
           Select Class Duration
         </CardTitle>
         <CardDescription className="text-slate-600">
-          Choose your expected class length. We'll automatically add a 5-minute buffer.
+          Choose your expected class length. We&apos;ll automatically add a 5-minute buffer.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -152,7 +152,7 @@ export function DurationSelector({
             <li>• Keep your device nearby for best audio quality</li>
             <li>• Recording continues even if you switch browser tabs</li>
             <li>• Your recording is saved locally and uploaded after class</li>
-            <li>• You'll receive warnings at 5 and 1 minute remaining</li>
+            <li>• You&apos;ll receive warnings at 5 and 1 minute remaining</li>
           </ul>
         </div>
       </CardContent>

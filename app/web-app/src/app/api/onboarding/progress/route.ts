@@ -3,7 +3,7 @@ import { auth } from "~/server/auth"
 import { getOnboardingProgress, updateOnboardingProgress } from "~/server/db/onboarding"
 
 // GET /api/onboarding/progress - Get current onboarding progress
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth()
     

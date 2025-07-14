@@ -58,7 +58,7 @@ export default function VoiceIntroPage() {
 
       <div className="mb-8">
         <h3 className="font-medium text-slate-900 mb-3">
-          You'll be asked to read 3 short phrases:
+          You&apos;ll be asked to read 3 short phrases:
         </h3>
         <ol className="text-left max-w-md mx-auto space-y-2 text-slate-600">
           <li>1. A greeting to start your class</li>

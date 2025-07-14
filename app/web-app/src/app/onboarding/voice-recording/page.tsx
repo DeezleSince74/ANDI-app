@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useOnboarding } from "@/lib/onboarding-context"
 import { NavigationButtons } from "@/components/onboarding/navigation-buttons"
@@ -138,7 +138,7 @@ export default function VoiceRecordingPage() {
     }
   }
 
-  const allPhrasesRecorded = recordedPhrases.every(recorded => recorded)
+  // const allPhrasesRecorded = recordedPhrases.every(recorded => recorded)
 
   return (
     <div>
@@ -168,7 +168,7 @@ export default function VoiceRecordingPage() {
           Please read the following phrase:
         </p>
         <p className="text-center text-xl font-medium text-slate-900">
-          "{VOICE_PHRASES[currentPhrase]}"
+          &ldquo;{VOICE_PHRASES[currentPhrase]}&rdquo;
         </p>
       </Card>
 

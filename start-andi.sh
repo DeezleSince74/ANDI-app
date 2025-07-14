@@ -20,7 +20,7 @@ LOG_DIR="$SCRIPT_DIR/logs"
 PID_DIR="$SCRIPT_DIR/.pids"
 
 # Default services to start
-DEFAULT_SERVICES="database web-app"
+DEFAULT_SERVICES="database web-app langflow"
 SERVICES="${SERVICES:-$DEFAULT_SERVICES}"
 
 # Environment

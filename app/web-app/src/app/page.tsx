@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "~/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
-import { Mic, Target, Users, Bot } from "lucide-react"
+import { Mic, Target, Users } from "lucide-react"
 
 export default function HomePage() {
   return (
@@ -28,7 +28,7 @@ export default function HomePage() {
             Transform Teaching Through <span className="text-slate-700">AI-Powered Classroom Analysis</span>
           </h1>
           <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto">
-            ANDI listens to your classroom, analyzes teaching effectiveness, and provides personalized coaching insights to help every educator thrive. <span className="font-medium text-slate-700">Your favorite teacher's favorite teacher.</span>
+            ANDI listens to your classroom, analyzes teaching effectiveness, and provides personalized coaching insights to help every educator thrive. <span className="font-medium text-slate-700">Your favorite teacher&apos;s favorite teacher.</span>
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" asChild className="bg-slate-700 hover:bg-slate-800 text-slate-50">

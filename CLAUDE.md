@@ -73,3 +73,11 @@ ANDI addresses critical educational challenges:
 - **Use slate color palette for consistent UI design** (Reference: https://ui.shadcn.com/colors)
 - Keep login form at 50% transparency for glass morphism effect
 - Apply ShadCN slate color scheme throughout all components and interfaces
+
+## Starting the Application
+- **Use `./start-andi.sh --detached` to start all services properly**
+- The default `./start-andi.sh` runs in foreground mode and will block when starting the web app
+- In detached mode, both database and web app start correctly in the background
+- **Fixed**: All TypeScript/ESLint compilation issues have been resolved
+- **Fixed**: Directory conflict between `./app` (Langflow) and `./src/app` (Next.js) has been resolved by renaming Langflow directory to `./langflow-app`
+- All pages now load correctly: homepage, authentication, onboarding, dashboard, etc.

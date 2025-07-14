@@ -81,7 +81,7 @@ export default function SubjectsPage() {
             console.log("Can't find subject clicked")
           }}
         >
-          Can't find my subject
+          Can&apos;t find my subject
         </Button>
       </div>
 

@@ -22,12 +22,16 @@ ANDI is an AI-powered instructional coaching platform that transforms classroom 
 
 2. **Start Application**
    ```bash
+   # Start in detached mode (recommended)
+   ./start-andi.sh --detached
+   
+   # Or start in foreground mode (will block on web app)
    ./start-andi.sh
    ```
 
 3. **Access Services**
    - **Database (PgAdmin)**: http://localhost:5050
-   - **Web App**: http://localhost:3000 *(coming soon)*
+   - **Web App**: http://localhost:3000
    - **API Docs**: http://localhost:3001/docs *(coming soon)*
 
 4. **Stop Application**
