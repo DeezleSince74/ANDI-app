@@ -24,6 +24,13 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
       - ASSEMBLYAI_API_KEY=${ASSEMBLYAI_API_KEY:-}
+      # Local Ollama Configuration
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+      - OLLAMA_ENABLED=${OLLAMA_ENABLED:-true}
+      - OLLAMA_CIQ_MODEL=${OLLAMA_CIQ_MODEL:-andi-ciq-analyzer}
+      - OLLAMA_COACH_MODEL=${OLLAMA_COACH_MODEL:-andi-coach}
+      - OLLAMA_REALTIME_MODEL=${OLLAMA_REALTIME_MODEL:-andi-realtime}
+      - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-60}
     volumes:
       - ./flows:/app/flows
       - ./custom_components:/app/custom_components
