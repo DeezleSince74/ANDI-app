@@ -77,7 +77,36 @@ ANDI addresses critical educational challenges:
 ## Starting the Application
 - **Use `./start-andi.sh --detached` to start all services properly**
 - The default `./start-andi.sh` runs in foreground mode and will block when starting the web app
-- In detached mode, both database and web app start correctly in the background
+- In detached mode, all services start correctly in the background
 - **Fixed**: All TypeScript/ESLint compilation issues have been resolved
-- **Fixed**: Directory conflict between `./app` (Langflow) and `./src/app` (Next.js) has been resolved by renaming Langflow directory to `./langflow-app`
+- **Fixed**: Directory conflicts resolved - proper separation of concerns
 - All pages now load correctly: homepage, authentication, onboarding, dashboard, etc.
+
+## Current ANDI Stack (July 2025)
+The complete ANDI application stack includes:
+1. **Database**: PostgreSQL + PgAdmin (http://localhost:5432, http://localhost:5050)
+2. **Web App**: Next.js 15 + Auth.js (http://localhost:3000)
+3. **Langflow**: AI workflow engine (http://localhost:7860)
+4. **Ollama**: Local LLM server with Meta Llama models (http://localhost:11434)
+
+### Starting the Full Stack
+```bash
+# Start all services (includes Ollama)
+./start-andi.sh --detached
+
+# Start specific services
+./start-andi.sh database web-app langflow ollama --detached
+
+# Start just Ollama
+./start-andi.sh ollama
+```
+
+### Ollama Local LLM Integration
+- **Complete setup** in `app/open-llm-app/` directory
+- **Meta Llama models** optimized for ANDI use cases:
+  - `andi-ciq-analyzer` (Llama 3.1 8B) - Deep classroom analysis
+  - `andi-coach` (Llama 3.1 7B Instruct) - Teacher coaching 
+  - `andi-realtime` (Llama 3.2 3B) - Fast real-time processing
+- **GPU/CPU support** with automatic detection
+- **Langflow integration** via custom components and sample flows
+- **Privacy-first approach** - all teacher/student data stays local
