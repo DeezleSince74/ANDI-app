@@ -21,10 +21,20 @@
 - [ ] **Configure domain and SSL** - Set up custom domain with HTTPS
 - [ ] **Set up monitoring and logging** - Configure application monitoring beyond Sentry
 
-### Application Features
+### Ollama Local LLM Integration (PRIORITY - Next Session)
+- [ ] **Test complete ANDI stack** - Run `./start-andi.sh --detached` and verify all 4 services start
+- [ ] **Download and setup Ollama models** - Run `cd app/open-llm-app && make setup-models` (~30GB download)
+- [ ] **Test Ollama API** - Verify Meta Llama models respond correctly with `make test`
+- [ ] **Import Langflow sample flows** - Load CIQ analysis and teacher coaching flows into Langflow IDE
+- [ ] **Test Langflow-Ollama integration** - Validate custom components work with local LLM models
+- [ ] **Add Ollama model selection to web app** - Create UI toggle for local vs external AI analysis
+- [ ] **Integrate Ollama endpoints in API routes** - Update recording analysis to support local LLM option
+- [ ] **Add model status indicators** - Show Ollama service health and loaded models in dashboard
+
+### Application Features  
 - [ ] **Implement dashboard functionality** - Build out the main app interface after signin
 - [ ] **Add audio recording/upload features** - Core ANDI classroom analysis functionality
-- [ ] **Implement CIQ framework calculations** - Build the Classroom Impact Quotient analysis
+- [ ] **Implement CIQ framework calculations** - Build the Classroom Impact Quotient analysis (can now use local Ollama models)
 - [ ] **Create user profile and settings** - Allow users to manage their accounts
 - [ ] **Add data visualization components** - Charts and graphs for classroom insights
 
@@ -63,3 +73,12 @@
 - Sentry integration is configured but needs real DSN
 - Email provider configuration is required for magic link authentication
 - All production environment variables need to be set up
+
+## Recent Progress (July 14, 2025)
+- ✅ **Ollama Local LLM Integration Complete** - Full infrastructure setup with Meta Llama models
+- ✅ **ANDI Stack Enhanced** - Now includes: database + web-app + Langflow + Ollama
+- ✅ **Privacy-First AI Architecture** - All educational data can now be processed locally
+- ✅ **Langflow Custom Components** - ANDI-specific Ollama components and sample flows created
+- ✅ **Startup Script Integration** - Ollama included in `./start-andi.sh` orchestration
+
+**Next Session Focus**: Test complete stack, download models, and begin Langflow flow development
