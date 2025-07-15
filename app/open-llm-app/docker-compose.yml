@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: andi_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./models:/app/models
+      - ./scripts:/app/scripts
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_ORIGINS=*
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_MAX_LOADED_MODELS=3
+    networks:
+      - ollama_network
+      - andi_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # Fallback for systems without GPU
+    profiles:
+      - gpu
+
+  ollama-cpu:
+    image: ollama/ollama:latest
+    container_name: andi_ollama_cpu
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./models:/app/models
+      - ./scripts:/app/scripts
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_ORIGINS=*
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_MAX_LOADED_MODELS=2
+    networks:
+      - ollama_network
+      - andi_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - cpu
+
+  # Web UI for Ollama management (optional)
+  ollama-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: andi_ollama_webui
+    ports:
+      - "8080:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_SECRET_KEY=andi_secret_key_2024
+      - WEBUI_AUTH=false
+    volumes:
+      - ollama_webui_data:/app/backend/data
+    depends_on:
+      - ollama
+    networks:
+      - ollama_network
+    restart: unless-stopped
+    profiles:
+      - webui
+
+volumes:
+  ollama_data:
+  ollama_webui_data:
+
+networks:
+  ollama_network:
+    driver: bridge
+  andi_network:
+    external: true
+    name: app-database_andi-network

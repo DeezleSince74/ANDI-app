@@ -74,7 +74,8 @@ Services:
     data-pipelines          Airflow ETL orchestration with monitoring
     web-app                 Next.js web application with Auth.js
     api                     API services (placeholder)
-    langflow                Langflow AI workflow engine (placeholder)
+    langflow                Langflow AI workflow engine
+    ollama                  Local LLM server with Meta Llama models
     all                     Start all services
 
 Examples:
@@ -154,7 +155,7 @@ SERVICES=$(echo "$SERVICES" | tr ',' ' ')
 
 # Handle 'all' service
 if [[ "$SERVICES" == *"all"* ]]; then
-    SERVICES="database data-warehouse data-pipelines web-app api langflow"
+    SERVICES="database data-warehouse data-pipelines web-app api langflow ollama"
 fi
 
 # Clean start if requested
@@ -179,6 +180,7 @@ if [[ "$CLEAN_START" == "true" ]]; then
     docker-compose -f app/data-warehouse/docker-compose.yml down -v 2>/dev/null || true
     docker-compose -f app/data-pipelines/docker-compose.yml down -v 2>/dev/null || true
     docker-compose -f app/Langflow/docker-compose.dev.yml down -v 2>/dev/null || true
+    docker-compose -f app/open-llm-app/docker-compose.yml down -v 2>/dev/null || true
     
     success "Cleanup completed"
 fi
@@ -360,6 +362,66 @@ start_langflow() {
     cd "$SCRIPT_DIR"
 }
 
+# Function to start Ollama local LLM server
+start_ollama() {
+    log "🤖 Starting Ollama local LLM server..."
+    
+    cd "$SCRIPT_DIR/app/open-llm-app"
+    
+    # Check if .env exists
+    if [[ ! -f ".env" ]]; then
+        warning "Ollama .env file not found, copying from .env.example"
+        if [[ -f ".env.example" ]]; then
+            cp .env.example .env
+        fi
+        warning "Please review and update app/open-llm-app/.env with your configuration"
+    fi
+    
+    # Check for GPU support
+    if command -v nvidia-smi > /dev/null 2>&1; then
+        log "🎮 NVIDIA GPU detected, starting with GPU support..."
+        OLLAMA_MODE="gpu"
+    else
+        log "💻 No GPU detected, starting in CPU mode..."
+        OLLAMA_MODE="cpu"
+    fi
+    
+    # Start Ollama services
+    if [[ "$DETACHED" == "true" ]]; then
+        make $OLLAMA_MODE > "$LOG_DIR/ollama.log" 2>&1 &
+        echo $! > "$PID_DIR/ollama.pid"
+    else
+        make $OLLAMA_MODE
+    fi
+    
+    # Health check
+    if [[ "$SKIP_HEALTH_CHECK" != "true" ]]; then
+        log "⏳ Waiting for Ollama to be ready..."
+        sleep 10
+        
+        local retries=30
+        while ! curl -s http://localhost:11434/api/version > /dev/null 2>&1 && [[ $retries -gt 0 ]]; do
+            sleep 3
+            ((retries--))
+        done
+        
+        if [[ $retries -eq 0 ]]; then
+            error "Ollama failed to start within timeout"
+            return 1
+        fi
+        
+        # Check health via make command
+        cd "$SCRIPT_DIR/app/open-llm-app" && make health > /dev/null 2>&1
+    fi
+    
+    success "Ollama started successfully"
+    info "Ollama API: http://localhost:11434"
+    info "Available models: llama3.1:8b, llama3.1:7b-instruct, llama3.2:3b"
+    info "Setup ANDI models: cd app/open-llm-app && make setup-models"
+    
+    cd "$SCRIPT_DIR"
+}
+
 # Function to start data warehouse
 start_data_warehouse() {
     log "📊 Starting ClickHouse data warehouse..."
@@ -475,6 +537,9 @@ for service in $SERVICES; do
         langflow)
             start_langflow
             ;;
+        ollama)
+            start_ollama
+            ;;
         data-warehouse)
             start_data_warehouse
             ;;
@@ -483,7 +548,7 @@ for service in $SERVICES; do
             ;;
         *)
             error "Unknown service: $service"
-            warning "Available services: database, data-warehouse, data-pipelines, web-app, api, langflow, all"
+            warning "Available services: database, data-warehouse, data-pipelines, web-app, api, langflow, ollama, all"
             ;;
     esac
 done
@@ -521,6 +586,13 @@ else
     warning "Langflow: Not running"
 fi
 
+# Ollama status
+if docker ps --format "table {{.Names}}" | grep -q "andi_ollama"; then
+    success "Ollama: Running (Local LLM Server)"
+else
+    warning "Ollama: Not running"
+fi
+
 # Web app status
 if lsof -ti:${ANDI_PORT:-3000} >/dev/null 2>&1; then
     success "Web App: Running (Next.js 15 + Auth.js)"
@@ -542,6 +614,9 @@ echo "   Data Pipelines:"
 echo "     - Airflow UI:         http://localhost:8080 (admin/admin)"
 echo "   Langflow AI Workflows:"
 echo "     - Langflow IDE:       http://localhost:7860 (admin@andi.local/langflow_admin)"
+echo "   Ollama Local LLM:"
+echo "     - Ollama API:         http://localhost:11434"
+echo "     - Web UI:             http://localhost:8080 (if enabled)"
 echo "   Web App:               http://localhost:${ANDI_PORT:-3000} (Next.js 15 + Auth.js)"
 echo "   API Docs:              http://localhost:${API_PORT:-3001}/docs (coming soon)"
 
@@ -565,6 +640,8 @@ echo "   Pipeline health:       cd app/data-pipelines && make health"
 echo "   Pipeline logs:         cd app/data-pipelines && make logs"
 echo "   Langflow IDE:          cd app/Langflow && make dev"
 echo "   Langflow health:       cd app/Langflow && make health"
+echo "   Ollama setup:          cd app/open-llm-app && make setup-models"
+echo "   Ollama health:         cd app/open-llm-app && make health"
 echo "   Web app dev:           cd app/web-app && npm run dev"
 echo "   Web app build:         cd app/web-app && npm run build"
 echo "   Database studio:       cd app/web-app && npm run db:studio"
