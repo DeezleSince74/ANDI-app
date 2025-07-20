@@ -114,15 +114,15 @@ create_models() {
     
     # Create CIQ Analyzer
     log "Creating andi-ciq-analyzer model..."
-    docker exec andi_ollama ollama create andi-ciq-analyzer -f /tmp/andi-ciq-analyzer.Modelfile
+    docker exec andi_ollama_cpu ollama create andi-ciq-analyzer -f /tmp/andi-ciq-analyzer.Modelfile
     
     # Create Teacher Coach
     log "Creating andi-coach model..."
-    docker exec andi_ollama ollama create andi-coach -f /tmp/andi-coach.Modelfile
+    docker exec andi_ollama_cpu ollama create andi-coach -f /tmp/andi-coach.Modelfile
     
     # Create Real-time Analyzer
     log "Creating andi-realtime model..."
-    docker exec andi_ollama ollama create andi-realtime -f /tmp/andi-realtime.Modelfile
+    docker exec andi_ollama_cpu ollama create andi-realtime -f /tmp/andi-realtime.Modelfile
     
     success "Created ANDI-optimized models"
 }
