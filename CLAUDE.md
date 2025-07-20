@@ -24,7 +24,7 @@ ANDI addresses critical educational challenges:
 - **Frontend**: Next.js 15, TypeScript, Tailwind CSS, ShadCN UI
 - **Backend**: Node.js with API routes
 - **Database**: PostgreSQL (application data) + ClickHouse (data warehouse)
-- **AI Stack**: Assembly AI for transcription, OpenAI/Anthropic/Gemini for insights, Langflow for AI workflows, RAG for contextualized recommendations
+- **AI Stack**: Assembly AI for transcription, OpenAI/Anthropic/Gemini for insights, Ollama for local LLM processing, RAG for contextualized recommendations
 - **Authentication**: Auth.js v5 (NextAuth) with Google OAuth, Azure Entra ID, Email magic links
 - **Storage**: Cloud storage for media files
 - **Testing**: Playwright E2E tests with accessibility testing (axe-playwright)
@@ -55,7 +55,7 @@ ANDI addresses critical educational challenges:
 - **Glass morphism UI design** with optimized background image and transparency
 - **Font size optimization** for improved readability across all components
 - **Logbook page implementation** with weekly recording organization and status badges
-- **Langflow AI workflow engine** fully integrated with Docker and startup scripts
+- **Ollama local LLM integration** with ANDI-specific models for privacy-first AI analysis
 
 ### 🚧 Next Steps (see TODO.md)
 - Sign up for Sentry and get production OAuth credentials
@@ -86,8 +86,7 @@ ANDI addresses critical educational challenges:
 The complete ANDI application stack includes:
 1. **Database**: PostgreSQL + PgAdmin (http://localhost:5432, http://localhost:5050)
 2. **Web App**: Next.js 15 + Auth.js (http://localhost:3000)
-3. **Langflow**: AI workflow engine (http://localhost:7860)
-4. **Ollama**: Local LLM server with Meta Llama models (http://localhost:11434)
+3. **Ollama**: Local LLM server with Meta Llama models (http://localhost:11434)
 
 ### Starting the Full Stack
 ```bash
@@ -95,7 +94,7 @@ The complete ANDI application stack includes:
 ./start-andi.sh --detached
 
 # Start specific services
-./start-andi.sh database web-app langflow ollama --detached
+./start-andi.sh database web-app ollama --detached
 
 # Start just Ollama
 ./start-andi.sh ollama
@@ -108,5 +107,5 @@ The complete ANDI application stack includes:
   - `andi-coach` (Llama 3.1 7B Instruct) - Teacher coaching 
   - `andi-realtime` (Llama 3.2 3B) - Fast real-time processing
 - **GPU/CPU support** with automatic detection
-- **Langflow integration** via custom components and sample flows
+- **Direct API integration** with Next.js for seamless LLM processing
 - **Privacy-first approach** - all teacher/student data stays local

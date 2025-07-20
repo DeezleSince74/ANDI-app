@@ -313,3 +313,227 @@ export const teacherProfiles = createTable(
     completedIdx: index("teacher_profile_completed_idx").on(profile.onboardingCompleted),
   })
 );
+
+// AI Orchestration Tables
+export const aiJobs = createTable(
+  "ai_job",
+  {
+    id: varchar("id", { length: 255 })
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    sessionId: varchar("session_id", { length: 255 })
+      .references(() => recordingSessions.sessionId),
+    userId: varchar("user_id", { length: 255 })
+      .notNull()
+      .references(() => users.id),
+    jobType: varchar("job_type", { length: 50 }).notNull(), // 'transcription', 'ciq_analysis', 'coaching', 'realtime'
+    status: varchar("status", { length: 50 }).default("pending").notNull(), // 'pending', 'processing', 'completed', 'failed', 'cancelled'
+    progress: integer("progress").default(0), // 0-100
+    externalId: varchar("external_id", { length: 255 }), // Assembly AI transcript_id, etc.
+    result: jsonb("result").$type<Record<string, unknown>>(),
+    errorMessage: text("error_message"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
+      () => new Date()
+    ),
+  },
+  (job) => ({
+    sessionIdIdx: index("ai_job_session_idx").on(job.sessionId),
+    userIdIdx: index("ai_job_user_idx").on(job.userId),
+    statusIdx: index("ai_job_status_idx").on(job.status),
+    typeIdx: index("ai_job_type_idx").on(job.jobType),
+    externalIdIdx: index("ai_job_external_idx").on(job.externalId),
+    createdAtIdx: index("ai_job_created_idx").on(job.createdAt),
+  })
+);
+
+export const recordingSessions = createTable(
+  "recording_session",
+  {
+    sessionId: varchar("session_id", { length: 255 })
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: varchar("user_id", { length: 255 })
+      .notNull()
+      .references(() => users.id),
+    title: varchar("title", { length: 255 }).notNull(),
+    description: text("description"),
+    audioUrl: varchar("audio_url", { length: 500 }),
+    duration: integer("duration"), // in seconds
+    status: varchar("status", { length: 50 }).default("pending").notNull(), // 'pending', 'processing', 'completed', 'failed'
+    transcriptId: varchar("transcript_id", { length: 255 }), // Assembly AI transcript ID
+    ciqScore: integer("ciq_score"), // 0-100
+    ciqData: jsonb("ciq_data").$type<Record<string, unknown>>(),
+    coachingInsights: jsonb("coaching_insights").$type<Record<string, unknown>>(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
+      () => new Date()
+    ),
+  },
+  (session) => ({
+    userIdIdx: index("recording_session_user_idx").on(session.userId),
+    statusIdx: index("recording_session_status_idx").on(session.status),
+    transcriptIdIdx: index("recording_session_transcript_idx").on(session.transcriptId),
+    createdAtIdx: index("recording_session_created_idx").on(session.createdAt),
+  })
+);
+
+export const transcripts = createTable(
+  "transcript",
+  {
+    id: varchar("id", { length: 255 })
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    sessionId: varchar("session_id", { length: 255 })
+      .notNull()
+      .references(() => recordingSessions.sessionId),
+    externalId: varchar("external_id", { length: 255 }).notNull(), // Assembly AI transcript ID
+    status: varchar("status", { length: 50 }).notNull(), // 'queued', 'processing', 'completed', 'error'
+    text: text("text"),
+    confidence: integer("confidence"), // 0-100
+    audioUrl: varchar("audio_url", { length: 500 }),
+    words: jsonb("words").$type<Array<{
+      text: string;
+      start: number;
+      end: number;
+      confidence: number;
+      speaker?: string;
+    }>>(),
+    utterances: jsonb("utterances").$type<Array<{
+      start: number;
+      end: number;
+      text: string;
+      speaker: string;
+      confidence: number;
+    }>>(),
+    summary: text("summary"),
+    chapters: jsonb("chapters").$type<Array<{
+      summary: string;
+      headline: string;
+      start: number;
+      end: number;
+    }>>(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
+      () => new Date()
+    ),
+  },
+  (transcript) => ({
+    sessionIdIdx: index("transcript_session_idx").on(transcript.sessionId),
+    externalIdIdx: index("transcript_external_idx").on(transcript.externalId),
+    statusIdx: index("transcript_status_idx").on(transcript.status),
+  })
+);
+
+export const ciqAnalyses = createTable(
+  "ciq_analysis",
+  {
+    id: varchar("id", { length: 255 })
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    sessionId: varchar("session_id", { length: 255 })
+      .notNull()
+      .references(() => recordingSessions.sessionId),
+    transcriptId: varchar("transcript_id", { length: 255 })
+      .notNull()
+      .references(() => transcripts.id),
+    overallScore: integer("overall_score"), // 0-100
+    equityScore: integer("equity_score"), // 0-100
+    creativityScore: integer("creativity_score"), // 0-100
+    innovationScore: integer("innovation_score"), // 0-100
+    // ECI Component Scores (E1-E5, C6-C10, I11-I15)
+    componentScores: jsonb("component_scores").$type<Record<string, number>>(),
+    // Detailed analysis by component
+    equityAnalysis: jsonb("equity_analysis").$type<Record<string, unknown>>(),
+    creativityAnalysis: jsonb("creativity_analysis").$type<Record<string, unknown>>(),
+    innovationAnalysis: jsonb("innovation_analysis").$type<Record<string, unknown>>(),
+    // Key insights and patterns
+    keyInsights: jsonb("key_insights").$type<string[]>(),
+    strengthsIdentified: jsonb("strengths_identified").$type<string[]>(),
+    areasForGrowth: jsonb("areas_for_growth").$type<string[]>(),
+    evidenceSnippets: jsonb("evidence_snippets").$type<Array<{
+      text: string;
+      component: string;
+      timestamp: number;
+      context: string;
+    }>>(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
+      () => new Date()
+    ),
+  },
+  (analysis) => ({
+    sessionIdIdx: index("ciq_analysis_session_idx").on(analysis.sessionId),
+    transcriptIdIdx: index("ciq_analysis_transcript_idx").on(analysis.transcriptId),
+    overallScoreIdx: index("ciq_analysis_score_idx").on(analysis.overallScore),
+  })
+);
+
+export const coachingRecommendations = createTable(
+  "coaching_recommendation",
+  {
+    id: varchar("id", { length: 255 })
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    sessionId: varchar("session_id", { length: 255 })
+      .notNull()
+      .references(() => recordingSessions.sessionId),
+    analysisId: varchar("analysis_id", { length: 255 })
+      .notNull()
+      .references(() => ciqAnalyses.id),
+    category: varchar("category", { length: 50 }).notNull(), // 'equity', 'creativity', 'innovation'
+    component: varchar("component", { length: 10 }), // 'E1', 'E2', 'C6', 'I11', etc.
+    priority: varchar("priority", { length: 20 }).default("medium").notNull(), // 'high', 'medium', 'low'
+    title: varchar("title", { length: 255 }).notNull(),
+    description: text("description").notNull(),
+    actionSteps: jsonb("action_steps").$type<string[]>(),
+    resources: jsonb("resources").$type<Array<{
+      title: string;
+      url: string;
+      type: string;
+      description?: string;
+    }>>(),
+    expectedOutcome: text("expected_outcome"),
+    timeframe: varchar("timeframe", { length: 50 }), // 'immediate', 'weekly', 'monthly'
+    difficultyLevel: varchar("difficulty_level", { length: 20 }), // 'beginner', 'intermediate', 'advanced'
+    evidenceBasis: jsonb("evidence_basis").$type<Array<{
+      text: string;
+      timestamp: number;
+      reasoning: string;
+    }>>(),
+    isImplemented: boolean("is_implemented").default(false),
+    implementedAt: timestamp("implemented_at", { withTimezone: true }),
+    feedback: jsonb("feedback").$type<Record<string, unknown>>(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
+      () => new Date()
+    ),
+  },
+  (recommendation) => ({
+    sessionIdIdx: index("coaching_recommendation_session_idx").on(recommendation.sessionId),
+    analysisIdIdx: index("coaching_recommendation_analysis_idx").on(recommendation.analysisId),
+    categoryIdx: index("coaching_recommendation_category_idx").on(recommendation.category),
+    priorityIdx: index("coaching_recommendation_priority_idx").on(recommendation.priority),
+    implementedIdx: index("coaching_recommendation_implemented_idx").on(recommendation.isImplemented),
+  })
+);

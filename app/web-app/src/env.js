@@ -28,9 +28,17 @@ export const env = createEnv({
     SENTRY_ENVIRONMENT: z.string().default("development"),
     
     // ANDI Services
-    LANGFLOW_API_URL: z.string().url().optional(),
     CLICKHOUSE_URL: z.string().url().optional(),
     AIRFLOW_API_URL: z.string().url().optional(),
+    
+    // AI Orchestration
+    ASSEMBLY_AI_API_KEY: z.string().optional(),
+    ASSEMBLY_AI_WEBHOOK_URL: z.string().url().optional(),
+    OLLAMA_BASE_URL: z.string().url().default("http://localhost:11434"),
+    OLLAMA_CIQ_MODEL: z.string().default("andi-ciq-analyzer"),
+    OLLAMA_COACH_MODEL: z.string().default("andi-coach"),
+    OLLAMA_REALTIME_MODEL: z.string().default("andi-realtime"),
+    REDIS_URL: z.string().default("redis://localhost:6379"),
   },
 
   /**
@@ -59,9 +67,17 @@ export const env = createEnv({
     SENTRY_ENVIRONMENT: process.env.SENTRY_ENVIRONMENT,
     
     // ANDI Services
-    LANGFLOW_API_URL: process.env.LANGFLOW_API_URL,
     CLICKHOUSE_URL: process.env.CLICKHOUSE_URL,
     AIRFLOW_API_URL: process.env.AIRFLOW_API_URL,
+    
+    // AI Orchestration
+    ASSEMBLY_AI_API_KEY: process.env.ASSEMBLY_AI_API_KEY,
+    ASSEMBLY_AI_WEBHOOK_URL: process.env.ASSEMBLY_AI_WEBHOOK_URL,
+    OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL,
+    OLLAMA_CIQ_MODEL: process.env.OLLAMA_CIQ_MODEL,
+    OLLAMA_COACH_MODEL: process.env.OLLAMA_COACH_MODEL,
+    OLLAMA_REALTIME_MODEL: process.env.OLLAMA_REALTIME_MODEL,
+    REDIS_URL: process.env.REDIS_URL,
     
     // Client
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,

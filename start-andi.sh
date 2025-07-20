@@ -20,7 +20,7 @@ LOG_DIR="$SCRIPT_DIR/logs"
 PID_DIR="$SCRIPT_DIR/.pids"
 
 # Default services to start
-DEFAULT_SERVICES="database web-app langflow"
+DEFAULT_SERVICES="database web-app"
 SERVICES="${SERVICES:-$DEFAULT_SERVICES}"
 
 # Environment
@@ -74,7 +74,6 @@ Services:
     data-pipelines          Airflow ETL orchestration with monitoring
     web-app                 Next.js web application with Auth.js
     api                     API services (placeholder)
-    langflow                Langflow AI workflow engine
     ollama                  Local LLM server with Meta Llama models
     all                     Start all services
 
@@ -155,7 +154,7 @@ SERVICES=$(echo "$SERVICES" | tr ',' ' ')
 
 # Handle 'all' service
 if [[ "$SERVICES" == *"all"* ]]; then
-    SERVICES="database data-warehouse data-pipelines web-app api langflow ollama"
+    SERVICES="database data-warehouse data-pipelines web-app api ollama"
 fi
 
 # Clean start if requested
@@ -179,7 +178,6 @@ if [[ "$CLEAN_START" == "true" ]]; then
     docker-compose -f app/app-database/docker-compose.yml down -v 2>/dev/null || true
     docker-compose -f app/data-warehouse/docker-compose.yml down -v 2>/dev/null || true
     docker-compose -f app/data-pipelines/docker-compose.yml down -v 2>/dev/null || true
-    docker-compose -f app/Langflow/docker-compose.dev.yml down -v 2>/dev/null || true
     docker-compose -f app/open-llm-app/docker-compose.yml down -v 2>/dev/null || true
     
     success "Cleanup completed"
@@ -312,55 +310,6 @@ start_api() {
     success "API services placeholder completed"
 }
 
-# Function to start Langflow AI workflow engine
-start_langflow() {
-    log "🤖 Starting Langflow AI workflow engine..."
-    
-    cd "$SCRIPT_DIR/app/Langflow"
-    
-    # Check if .env exists
-    if [[ ! -f ".env" ]]; then
-        warning "Langflow .env file not found, copying from .env.example"
-        if [[ -f ".env.example" ]]; then
-            cp .env.example .env
-        fi
-        warning "Please review and update app/Langflow/.env with your configuration"
-    fi
-    
-    # Start Langflow services
-    if [[ "$DETACHED" == "true" ]]; then
-        make dev > "$LOG_DIR/langflow.log" 2>&1 &
-        echo $! > "$PID_DIR/langflow.pid"
-    else
-        make dev
-    fi
-    
-    # Health check
-    if [[ "$SKIP_HEALTH_CHECK" != "true" ]]; then
-        log "⏳ Waiting for Langflow to be ready..."
-        sleep 15
-        
-        local retries=30
-        while ! curl -s http://localhost:7860/api/v1/version > /dev/null 2>&1 && [[ $retries -gt 0 ]]; do
-            sleep 3
-            ((retries--))
-        done
-        
-        if [[ $retries -eq 0 ]]; then
-            error "Langflow failed to start within timeout"
-            return 1
-        fi
-        
-        # Check health via make command
-        cd "$SCRIPT_DIR/app/Langflow" && make status > /dev/null 2>&1
-    fi
-    
-    success "Langflow started successfully"
-    info "Langflow IDE: http://localhost:7860"
-    info "Default Login: admin@andi.local / langflow_admin"
-    
-    cd "$SCRIPT_DIR"
-}
 
 # Function to start Ollama local LLM server
 start_ollama() {
@@ -534,9 +483,6 @@ for service in $SERVICES; do
         api)
             start_api
             ;;
-        langflow)
-            start_langflow
-            ;;
         ollama)
             start_ollama
             ;;
@@ -548,7 +494,7 @@ for service in $SERVICES; do
             ;;
         *)
             error "Unknown service: $service"
-            warning "Available services: database, data-warehouse, data-pipelines, web-app, api, langflow, ollama, all"
+            warning "Available services: database, data-warehouse, data-pipelines, web-app, api, ollama, all"
             ;;
     esac
 done
@@ -579,12 +525,6 @@ else
     warning "Data Pipelines: Not running"
 fi
 
-# Langflow status
-if docker ps --format "table {{.Names}}" | grep -q "andi-langflow-dev"; then
-    success "Langflow: Running (AI Workflows IDE)"
-else
-    warning "Langflow: Not running"
-fi
 
 # Ollama status
 if docker ps --format "table {{.Names}}" | grep -q "andi_ollama"; then
@@ -612,8 +552,6 @@ echo "     - Grafana:            http://localhost:3000 (admin/admin)"
 echo "     - Prometheus:         http://localhost:9090"
 echo "   Data Pipelines:"
 echo "     - Airflow UI:         http://localhost:8080 (admin/admin)"
-echo "   Langflow AI Workflows:"
-echo "     - Langflow IDE:       http://localhost:7860 (admin@andi.local/langflow_admin)"
 echo "   Ollama Local LLM:"
 echo "     - Ollama API:         http://localhost:11434"
 echo "     - Web UI:             http://localhost:8080 (if enabled)"
@@ -638,8 +576,6 @@ echo "   Warehouse setup:       cd app/data-warehouse && make setup"
 echo "   Warehouse queries:     cd app/data-warehouse && make sample-analytics"
 echo "   Pipeline health:       cd app/data-pipelines && make health"
 echo "   Pipeline logs:         cd app/data-pipelines && make logs"
-echo "   Langflow IDE:          cd app/Langflow && make dev"
-echo "   Langflow health:       cd app/Langflow && make health"
 echo "   Ollama setup:          cd app/open-llm-app && make setup-models"
 echo "   Ollama health:         cd app/open-llm-app && make health"
 echo "   Web app dev:           cd app/web-app && npm run dev"
