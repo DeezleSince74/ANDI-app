@@ -2,8 +2,10 @@ import fs from 'fs'
 import path from 'path'
 import { randomUUID } from 'crypto'
 import sharp from 'sharp'
+import { azureStorage } from '~/services/AzureStorageService'
 
-// Local storage configuration
+// Storage configuration
+const STORAGE_PROVIDER = process.env.STORAGE_PROVIDER || 'local'
 const STORAGE_ROOT = path.join(process.cwd(), 'uploads')
 const PUBLIC_URL_BASE = '/api/files'
 
@@ -54,11 +56,8 @@ export async function saveImage(
     quality?: number
   } = {}
 ): Promise<{ filename: string; url: string; size: number }> {
-  ensureStorageDirectories()
-  
   const fileId = randomUUID()
   const filename = `${fileId}.jpg` // Always save as JPG for consistency
-  const filepath = path.join(STORAGE_ROOT, 'images', filename)
   
   // Process image with Sharp
   let imageProcessor = sharp(buffer)
@@ -75,13 +74,28 @@ export async function saveImage(
   
   const processedBuffer = await imageProcessor.toBuffer()
   
-  // Save to local filesystem
-  fs.writeFileSync(filepath, processedBuffer)
-  
-  return {
-    filename,
-    url: `${PUBLIC_URL_BASE}/images/${filename}`,
-    size: processedBuffer.length
+  if (STORAGE_PROVIDER === 'azure') {
+    // Use Azure Blob Storage
+    const blobUrl = await azureStorage.uploadBuffer(processedBuffer, filename, 'image/jpeg', 'images')
+    
+    return {
+      filename,
+      url: blobUrl,
+      size: processedBuffer.length
+    }
+  } else {
+    // Use local storage
+    ensureStorageDirectories()
+    const filepath = path.join(STORAGE_ROOT, 'images', filename)
+    
+    // Save to local filesystem
+    fs.writeFileSync(filepath, processedBuffer)
+    
+    return {
+      filename,
+      url: `${PUBLIC_URL_BASE}/images/${filename}`,
+      size: processedBuffer.length
+    }
   }
 }
 
@@ -90,20 +104,32 @@ export async function saveAudio(
   buffer: Buffer,
   mimetype: string
 ): Promise<{ filename: string; url: string; size: number }> {
-  ensureStorageDirectories()
-  
   const fileId = randomUUID()
   const extension = getFileExtension(mimetype)
   const filename = `${fileId}${extension}`
-  const filepath = path.join(STORAGE_ROOT, 'audio', filename)
   
-  // Save audio file directly (no processing)
-  fs.writeFileSync(filepath, buffer)
-  
-  return {
-    filename,
-    url: `${PUBLIC_URL_BASE}/audio/${filename}`,
-    size: buffer.length
+  if (STORAGE_PROVIDER === 'azure') {
+    // Use Azure Blob Storage
+    const blobUrl = await azureStorage.uploadBuffer(buffer, filename, mimetype, 'audio')
+    
+    return {
+      filename,
+      url: blobUrl,
+      size: buffer.length
+    }
+  } else {
+    // Use local storage
+    ensureStorageDirectories()
+    const filepath = path.join(STORAGE_ROOT, 'audio', filename)
+    
+    // Save audio file directly (no processing)
+    fs.writeFileSync(filepath, buffer)
+    
+    return {
+      filename,
+      url: `${PUBLIC_URL_BASE}/audio/${filename}`,
+      size: buffer.length
+    }
   }
 }
 

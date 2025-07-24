@@ -32,6 +32,8 @@ export function UploadModal({ isOpen, onClose, teacherId }: UploadModalProps) {
         'audio/mpeg',
         'audio/mp4',
         'audio/m4a',
+        'audio/x-m4a',
+        'audio/mp4a-latm',
         'audio/flac',
         'audio/wav',
         'audio/x-wav',
@@ -117,6 +119,7 @@ export function UploadModal({ isOpen, onClose, teacherId }: UploadModalProps) {
       }
 
       const result = await response.json();
+      console.log('=== UPLOAD API RESPONSE ===', result); // Debug log
       
       setUploadProgress(100);
       setUploadState('success');
@@ -125,10 +128,21 @@ export function UploadModal({ isOpen, onClose, teacherId }: UploadModalProps) {
         duration: 3000,
       });
 
-      // Auto-close after success
+      // Auto-close and redirect to processing status
       setTimeout(() => {
         onClose();
         resetModal();
+        
+        // Redirect to processing status page if we have a sessionId
+        if (result.sessionId) {
+          const url = result.transcriptId 
+            ? `/processing/${result.sessionId}?transcriptId=${result.transcriptId}`
+            : `/processing/${result.sessionId}`;
+          console.log('Redirecting to:', url); // Debug log
+          window.location.href = url;
+        } else {
+          console.log('No sessionId in response, not redirecting'); // Debug log
+        }
       }, 2000);
 
     } catch (error) {

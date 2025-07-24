@@ -1,22 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { AssemblyAIService } from '@/services/ai/AssemblyAIService';
+import { auth } from '@/server/auth';
 
 /**
  * ANDI Recording Upload API Endpoint
  * Handles classroom recording uploads with teacher ID and metadata
+ * Triggers AI analysis pipeline for transcription and CIQ analysis
  */
 
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await auth();
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    
+    const user = session.user;
+
     // Parse form data
     const formData = await request.formData();
     
     // Extract recording metadata
-    const teacherId = formData.get('teacherId') as string;
-    const duration = parseInt(formData.get('duration') as string);
-    const selectedDuration = parseInt(formData.get('selectedDuration') as string);
+    const teacherId = formData.get('teacherId') as string || user.id;
+    const duration = parseInt(formData.get('duration') as string) || 0;
+    const selectedDuration = parseInt(formData.get('selectedDuration') as string) || 0;
     const timestamp = formData.get('timestamp') as string;
     const recordingId = formData.get('recordingId') as string;
     const audioFile = formData.get('audio') as File;
@@ -48,8 +63,18 @@ export async function POST(request: NextRequest) {
       'audio/webm',
       'audio/ogg',
       'audio/mp4',
+      'audio/m4a',
+      'audio/x-m4a',
+      'audio/mp4a-latm',
       'audio/wav',
-      'audio/mpeg'
+      'audio/x-wav',
+      'audio/wave',
+      'audio/vnd.wav',
+      'audio/mpeg',
+      'audio/mp3',
+      'audio/flac',
+      'audio/aac',
+      'audio/x-ms-wma',
     ];
 
     if (!allowedTypes.includes(audioFile.type)) {
@@ -104,42 +129,89 @@ export async function POST(request: NextRequest) {
       timestamp,
       uploadedAt: new Date().toISOString(),
       status: 'uploaded',
-      processingStatus: 'pending' // for Langflow queue
+      processingStatus: 'pending',
     };
 
-    // TODO: Add recording to processing queue
-    // This is where you would:
-    // 1. Save metadata to database
-    // 2. Add to processing queue for Langflow
-    // 3. Trigger processing workflow
-    
     console.log('Recording uploaded successfully:', recordingMetadata);
 
-    // For now, simulate adding to queue
-    console.log(`Recording ${recordingId} added to processing queue for teacher ${teacherId}`);
-    
-    // TODO: Integrate with your database
-    // Example:
-    // await db.recordings.create({
-    //   data: recordingMetadata
-    // });
-    
-    // TODO: Add to Langflow processing queue
-    // Example:
-    // await addToProcessingQueue(recordingMetadata);
-
-    return NextResponse.json({
-      success: true,
-      recordingId,
-      message: 'Recording uploaded successfully',
-      metadata: {
-        fileName,
-        fileSize: audioFile.size,
-        duration,
-        selectedDuration,
-        uploadedAt: recordingMetadata.uploadedAt
+    // Start AI analysis with Assembly AI
+    try {
+      const apiKey = process.env.ASSEMBLY_AI_API_KEY;
+      if (!apiKey) {
+        throw new Error('Assembly AI API key not configured');
       }
-    });
+
+      const assemblyAI = new AssemblyAIService(apiKey);
+      
+      // Read the file buffer
+      const fileBuffer = await readFile(filePath);
+      
+      // Upload to Assembly AI
+      console.log('Uploading to Assembly AI...');
+      const uploadUrl = await assemblyAI.uploadAudio(fileBuffer, fileName);
+      
+      // Start transcription
+      console.log('Starting transcription...');
+      const transcriptId = await assemblyAI.startTranscription(uploadUrl, {
+        speaker_labels: true,
+        sentiment_analysis: true,
+        auto_highlights: true,
+        language_detection: true,
+      });
+
+      console.log(`Transcription started with ID: ${transcriptId}`);
+
+      // Create session ID for tracking
+      const sessionId = `analysis_${recordingId}`;
+
+      // TODO: Save to database
+      // await db.recording.create({
+      //   data: {
+      //     ...recordingMetadata,
+      //     sessionId,
+      //     transcriptId,
+      //   }
+      // });
+
+      return NextResponse.json({
+        success: true,
+        recordingId,
+        sessionId,
+        transcriptId,
+        message: 'Recording uploaded and transcription started',
+        metadata: {
+          fileName,
+          fileSize: audioFile.size,
+          duration,
+          selectedDuration,
+          uploadedAt: recordingMetadata.uploadedAt,
+        },
+        analysis: {
+          sessionId,
+          transcriptId,
+          status: 'transcribing',
+          message: 'Audio transcription in progress. This may take a few minutes.',
+        },
+      });
+
+    } catch (aiError) {
+      console.error('Assembly AI error:', aiError);
+      
+      // Still return success for upload, but indicate analysis failed to start
+      return NextResponse.json({
+        success: true,
+        recordingId,
+        message: 'Recording uploaded successfully, but transcription failed to start',
+        metadata: {
+          fileName,
+          fileSize: audioFile.size,
+          duration,
+          selectedDuration,
+          uploadedAt: recordingMetadata.uploadedAt,
+        },
+        analysisError: aiError instanceof Error ? aiError.message : 'Failed to start transcription',
+      });
+    }
 
   } catch (error) {
     console.error('Recording upload error:', error);
@@ -165,24 +237,3 @@ export async function OPTIONS() {
     },
   });
 }
-
-/**
- * TODO: Implement queue integration
- * 
- * async function addToProcessingQueue(metadata: RecordingMetadata) {
- *   // Add recording to processing queue
- *   // This could be:
- *   // - Database table with status tracking
- *   // - Redis queue
- *   // - Message queue (RabbitMQ, etc.)
- *   // - Direct API call to Langflow
- *   
- *   // Example implementation:
- *   await queueService.add('recording-processing', {
- *     recordingId: metadata.id,
- *     teacherId: metadata.teacherId,
- *     filePath: metadata.filePath,
- *     metadata
- *   });
- * }
- */
