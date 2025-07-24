@@ -69,7 +69,7 @@ Options:
     --debug                 Enable debug logging
 
 Services:
-    database                PostgreSQL database and PgAdmin
+    database                PostgreSQL database
     data-warehouse          ClickHouse data warehouse with Grafana & Prometheus
     data-pipelines          Airflow ETL orchestration with monitoring
     web-app                 Next.js web application with Auth.js
@@ -241,7 +241,6 @@ start_database() {
     fi
     
     success "Database started successfully"
-    info "PgAdmin: http://localhost:${PGADMIN_PORT:-5050}"
     
     cd "$SCRIPT_DIR"
 }
@@ -506,7 +505,7 @@ echo "────────────────────────�
 
 # Database status
 if docker ps --format "table {{.Names}}" | grep -q "andi-postgres"; then
-    success "Database: Running (PostgreSQL + PgAdmin)"
+    success "Database: Running (PostgreSQL)"
 else
     warning "Database: Not running"
 fi
@@ -545,7 +544,7 @@ echo "────────────────────────�
 # Show access URLs
 echo
 info "🔗 Access URLs:"
-echo "   Database (PgAdmin):     http://localhost:${PGADMIN_PORT:-5050}"
+echo "   Database:               PostgreSQL on port ${POSTGRES_PORT:-5432}"
 echo "   Data Warehouse:"
 echo "     - ClickHouse Play:    http://localhost:8123/play"
 echo "     - Grafana:            http://localhost:3000 (admin/admin)"

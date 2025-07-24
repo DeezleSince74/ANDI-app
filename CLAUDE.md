@@ -84,7 +84,7 @@ ANDI addresses critical educational challenges:
 
 ## Current ANDI Stack (July 2025)
 The complete ANDI application stack includes:
-1. **Database**: PostgreSQL + PgAdmin (http://localhost:5432, http://localhost:5050)
+1. **Database**: PostgreSQL (http://localhost:5432)
 2. **Web App**: Next.js 15 + Auth.js (http://localhost:3000)
 3. **Ollama**: Local LLM server with Meta Llama models (http://localhost:11434)
 

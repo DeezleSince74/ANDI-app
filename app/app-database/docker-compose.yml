@@ -24,31 +24,31 @@ services:
     networks:
       - andi-network
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: andi-pgadmin
-    restart: unless-stopped
-    ports:
-      - "${PGADMIN_PORT:-5050}:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@andi.local}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin_password}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-      - ./pgadmin/servers.json:/pgadmin4/servers.json
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - andi-network
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: andi-pgadmin
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${PGADMIN_PORT:-5050}:80"
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@andi.local}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin_password}
+  #     PGADMIN_CONFIG_SERVER_MODE: 'False'
+  #     PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+  #   volumes:
+  #     - pgadmin_data:/var/lib/pgadmin
+  #     - ./pgadmin/servers.json:/pgadmin4/servers.json
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   networks:
+  #     - andi-network
 
 volumes:
   postgres_data:
     driver: local
-  pgadmin_data:
-    driver: local
+  # pgadmin_data:
+  #   driver: local
 
 networks:
   andi-network:
