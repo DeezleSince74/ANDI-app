@@ -24,6 +24,15 @@ export const authConfig = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
+      authorization: {
+        params: {
+          // TODO: Change to "select_account" or remove entirely for production
+          // "consent" forces OAuth screen every time - good for testing, bad UX for production
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
     }),
     AzureADProvider({
       clientId: process.env.AZURE_AD_CLIENT_ID!,
@@ -76,4 +85,15 @@ export const authConfig = {
     },
   },
   debug: process.env.NODE_ENV === "development",
+  logger: {
+    error(error) {
+      console.error('[AUTH ERROR]', error)
+    },
+    warn(code) {
+      console.warn('[AUTH WARN]', code)
+    },
+    debug(code, metadata) {
+      console.log('[AUTH DEBUG]', code, metadata)
+    }
+  },
 } satisfies NextAuthConfig;

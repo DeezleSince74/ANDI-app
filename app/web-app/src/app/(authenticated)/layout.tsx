@@ -17,58 +17,6 @@ export default async function AuthenticatedLayout({
   
   const session = await auth()
   
-  // Development bypass: Check for a special cookie that indicates dev login
-  const isDevelopment = process.env.NODE_ENV === 'development'
-  
-  if (!session && isDevelopment) {
-    console.log('🧪 [AUTH-LAYOUT] No session in development, creating mock session')
-    // Create a mock session for development
-    const mockSession = {
-      user: {
-        id: "550e8400-e29b-41d4-a716-446655440011",
-        email: "david.thompson@mcps.edu",
-        name: "David Thompson",
-        image: null,
-        role: "teacher",
-        schoolId: "550e8400-e29b-41d4-a716-446655440002",
-        districtId: "550e8400-e29b-41d4-a716-446655440001",
-        gradeLevels: ["9", "10", "11", "12"],
-        subjects: ["Mathematics", "Statistics"],
-        yearsExperience: 8,
-        certificationLevel: "Professional"
-      },
-      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-    }
-    
-    console.log('🎭 [AUTH-LAYOUT] Using mock session for David Thompson')
-    
-    return (
-      <SessionProvider session={mockSession}>
-        <RecordingProvider>
-          <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
-              <AppHeader />
-              <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
-                {children}
-              </main>
-            </SidebarInset>
-          </SidebarProvider>
-          <Toaster 
-            position="top-right"
-            toastOptions={{
-              style: {
-                background: 'white',
-                color: '#1e293b',
-                border: '1px solid #e2e8f0',
-              },
-            }}
-          />
-        </RecordingProvider>
-      </SessionProvider>
-    )
-  }
-  
   if (!session) {
     console.log('❌ [AUTH-LAYOUT] No session found, redirecting to signin')
     redirect("/auth/signin")
