@@ -1,11 +1,105 @@
-# ANDI Session Notes - July 14, 2025
+# ANDI Session Notes
 
-## Session Summary
+## Previous Session - July 14, 2025
 Successfully integrated Ollama local LLM server with Meta Llama models into the ANDI platform for privacy-focused AI inference.
 
-## ✅ Completed This Session
+## Current Session - July 24, 2025
 
-### 1. Ollama Infrastructure Setup
+### Session Summary
+Worked on implementing the upload workflow for audio recordings, setting up Google OAuth authentication, implementing Azure Blob storage for voice clips, and creating user reset scripts for testing.
+
+### Key Accomplishments
+
+#### 1. Upload Workflow Implementation
+- Fixed M4A file upload support (added missing MIME types: `audio/x-m4a`, `audio/mp4a-latm`)
+- Integrated Assembly AI for audio transcription (API key stored in .env.local)
+- Created processing status page at `/processing/[sessionId]`
+- Set up real-time transcription status polling
+
+#### 2. Google OAuth Authentication
+- Configured Google OAuth credentials (stored in .env.local)
+- Added `prompt: "consent"` to force OAuth screen (TODO: Change for production)
+- Removed all development authentication bypasses
+- **IMPORTANT**: Need to add callback URL to Google Cloud Console: `http://localhost:3000/api/auth/callback/google`
+
+#### 3. Azure Blob Storage Implementation
+- Set up Azurite for local Azure Blob storage simulation
+- Created comprehensive AzureStorageService
+- Fixed voice clip storage during onboarding to persist to Azure
+- Storage runs on ports 10000-10002
+
+#### 4. User Management Scripts
+- Created `/scripts/reset-user.sh` - comprehensive user data removal
+- Created `/reset-derek.sh` - quick wrapper for derekfrempong@gmail.com
+- Fixed scripts to use correct NextAuth table structure (andi_web_* tables)
+
+#### 5. Build and Infrastructure Fixes
+- Fixed Next.js build errors by cleaning .next directory
+- Installed missing @azure/storage-blob dependency
+- Added detailed auth logging for debugging
+
+### Current State
+
+#### Running Services
+- PostgreSQL Database (port 5432)
+- Azure Blob Storage Simulator (Azurite) (ports 10000-10002)
+- Ollama Local LLM Server (port 11434) with ANDI models
+- Next.js Web Application (port 3000)
+
+#### Pending Tasks (TODO)
+1. **Add Google OAuth callback URL to Google Cloud Console**
+   - Go to https://console.cloud.google.com/
+   - Add: `http://localhost:3000/api/auth/callback/google`
+
+2. **Test complete onboarding flow with voice clips**
+   - Sign in with Google OAuth
+   - Complete full onboarding including voice recording
+   - Verify voice clips are stored in Azure Blob storage
+
+3. **Complete upload-to-analysis workflow**
+   - Implement results display page
+   - Create database records for uploads
+   - Test full workflow with M4A file
+
+4. **Production considerations**
+   - Change Google OAuth prompt from "consent" to "select_account"
+   - Set up production Azure Blob storage
+   - Configure production OAuth credentials
+
+### Known Issues
+- Next.js occasionally has build corruption issues - fix with `rm -rf .next`
+- Stop script shows some errors but continues properly
+- Redis connection errors during build are expected (Redis is optional)
+
+### File Locations
+- Upload Modal: `/src/components/recording/UploadModal.tsx`
+- Upload API: `/src/app/api/recordings/upload/route.ts`
+- Processing Page: `/src/app/(authenticated)/processing/[sessionId]/page.tsx`
+- Azure Storage Service: `/src/services/AzureStorageService.ts`
+- Auth Config: `/src/lib/auth.ts`
+- User Reset Script: `/scripts/reset-user.sh`
+
+### Environment Variables Set
+- Assembly AI API key configured
+- Google OAuth credentials configured
+- Azure Blob storage configured with Azurite
+- Storage provider set to "azure"
+
+### Next Session Starting Point
+1. Start services with `./start-andi.sh --detached`
+2. Ensure Google OAuth callback URL is configured in Cloud Console
+3. Test authentication flow with derekfrempong@gmail.com
+4. Complete onboarding with voice recording
+5. Test file upload with the M4A recording
+6. Implement results display page for transcriptions
+
+---
+
+## Previous Session Content - July 14, 2025
+
+### ✅ Completed in Previous Session
+
+#### 1. Ollama Infrastructure Setup
 - **Location**: `app/open-llm-app/` directory
 - **Docker Compose**: GPU + CPU profiles with health checks
 - **Makefile**: Complete management system with 12+ commands
