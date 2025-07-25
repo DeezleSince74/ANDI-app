@@ -3,6 +3,7 @@ import { type NextAuthConfig } from "next-auth";
 import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
+import { sql } from "drizzle-orm";
 
 import { db } from "~/server/db";
 import {
@@ -61,27 +62,61 @@ export const authConfig = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-        role: user.role,
-        schoolId: user.schoolId,
-        districtId: user.districtId,
-        gradeLevels: user.gradeLevels,
-        subjects: user.subjects,
-        yearsExperience: user.yearsExperience,
-        certificationLevel: user.certificationLevel,
-      },
-    }),
+    session: ({ session, user }) => {
+      console.log("Session callback - user.image:", user.image);
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: user.id,
+          image: user.image,
+          role: user.role,
+          schoolId: user.schoolId,
+          districtId: user.districtId,
+          gradeLevels: user.gradeLevels,
+          subjects: user.subjects,
+          yearsExperience: user.yearsExperience,
+          certificationLevel: user.certificationLevel,
+        },
+      };
+    },
   },
   events: {
     async createUser({ user }) {
-      console.log("New user created:", user.email);
+      console.log("New user created:", user.email, "Image:", user.image);
+      
+      // Sync user to auth.users table for core database compatibility
+      try {
+        await db.execute(sql`
+          INSERT INTO auth.users (id, email, password_hash, full_name, role, avatar_url, email_verified)
+          VALUES (${user.id}, ${user.email}, 'oauth_user', ${user.name || 'User'}, 'teacher', ${user.image}, true)
+          ON CONFLICT (id) DO UPDATE SET
+            full_name = EXCLUDED.full_name,
+            avatar_url = EXCLUDED.avatar_url,
+            updated_at = CURRENT_TIMESTAMP
+        `);
+        console.log("✅ User synced to auth.users:", user.email);
+      } catch (error) {
+        console.error("❌ Failed to sync user to auth.users:", error);
+      }
     },
     async signIn({ user, account }) {
-      console.log("User signed in:", user.email, "Provider:", account?.provider);
+      console.log("User signed in:", user.email, "Provider:", account?.provider, "Image:", user.image);
+      
+      // Ensure user exists in auth.users table on every sign-in
+      try {
+        await db.execute(sql`
+          INSERT INTO auth.users (id, email, password_hash, full_name, role, avatar_url, email_verified)
+          VALUES (${user.id}, ${user.email}, 'oauth_user', ${user.name || 'User'}, 'teacher', ${user.image}, true)
+          ON CONFLICT (id) DO UPDATE SET
+            full_name = EXCLUDED.full_name,
+            avatar_url = EXCLUDED.avatar_url,
+            updated_at = CURRENT_TIMESTAMP
+        `);
+        console.log("✅ User synced to auth.users on sign-in:", user.email);
+      } catch (error) {
+        console.error("❌ Failed to sync user to auth.users on sign-in:", error);
+      }
     },
   },
   debug: process.env.NODE_ENV === "development",

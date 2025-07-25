@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm"
+import { eq, and, sql } from "drizzle-orm"
 import { db } from "./index"
 import { 
   onboardingContent, 
@@ -183,6 +183,23 @@ export async function completeOnboarding(
   }
 ) {
   try {
+    console.log("🔄 Starting onboarding completion for user:", userId);
+    console.log("📊 Onboarding data:", JSON.stringify(onboardingData, null, 2));
+
+    // Ensure user exists in auth.users table (fallback safety check)
+    try {
+      await db.execute(sql`
+        INSERT INTO auth.users (id, email, password_hash, full_name, role, email_verified)
+        SELECT id, email, 'oauth_user', name, 'teacher', true
+        FROM andi_web_user 
+        WHERE id = ${userId}
+        ON CONFLICT (id) DO NOTHING
+      `);
+      console.log("✅ User existence verified in auth.users for:", userId);
+    } catch (syncError) {
+      console.warn("⚠️ User sync to auth.users failed (may already exist):", syncError);
+    }
+
     // Update teacher profile with all onboarding data
     const profile = await createOrUpdateTeacherProfile(userId, {
       gradesTaught: onboardingData.gradesTaught,
@@ -198,13 +215,16 @@ export async function completeOnboarding(
         selectedGoals: onboardingData.goals,
       },
     })
+    
+    console.log("✅ Teacher profile created/updated:", profile.userId);
 
     // Mark onboarding progress as completed
-    await updateOnboardingProgress(userId, {
+    const progressResult = await updateOnboardingProgress(userId, {
       currentStep: 10, // Final step
       completedSteps: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       stepData: onboardingData,
     })
+    console.log("✅ Onboarding progress updated:", progressResult.userId);
 
     // Update completion timestamp
     await db
@@ -213,10 +233,14 @@ export async function completeOnboarding(
         completedAt: new Date(),
       })
       .where(eq(onboardingProgress.userId, userId))
+    
+    console.log("✅ Onboarding completion timestamp set for:", userId);
+    console.log("🎉 Onboarding successfully completed for user:", userId);
 
     return profile
   } catch (error) {
-    console.error(`Error completing onboarding for user ${userId}:`, error)
+    console.error(`❌ CRITICAL: Error completing onboarding for user ${userId}:`, error)
+    console.error("📊 Failed onboarding data:", JSON.stringify(onboardingData, null, 2))
     throw error
   }
 }

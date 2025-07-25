@@ -1,4 +1,4 @@
-import FormData from 'form-data';
+import { AssemblyAI } from 'assemblyai';
 
 export interface TranscriptionOptions {
   speaker_labels: boolean;
@@ -53,51 +53,60 @@ export interface TranscriptionStatus {
 }
 
 export class AssemblyAIService {
-  private readonly apiKey: string;
-  private readonly baseUrl = 'https://api.assemblyai.com/v2';
+  private readonly client: AssemblyAI;
 
   constructor(apiKey: string) {
-    this.apiKey = apiKey;
+    this.client = new AssemblyAI({
+      apiKey: apiKey,
+    });
   }
 
   /**
-   * Upload audio file to Assembly AI
+   * Upload audio file to Assembly AI using official SDK
    */
   async uploadAudio(audioFile: Buffer | File, filename: string): Promise<string> {
-    const formData = new FormData();
-    
-    if (audioFile instanceof Buffer) {
-      formData.append('file', audioFile, filename);
-    } else {
-      formData.append('file', audioFile);
-    }
-
-    const response = await fetch(`${this.baseUrl}/upload`, {
-      method: 'POST',
-      headers: {
-        'Authorization': this.apiKey,
-        ...formData.getHeaders?.() || {},
-      },
-      body: formData as any,
+    console.log('🔄 [AssemblyAI] Starting file upload using SDK...');
+    console.log('📊 [AssemblyAI] File details:', {
+      filename,
+      isBuffer: audioFile instanceof Buffer,
+      size: audioFile instanceof Buffer ? audioFile.length : audioFile.size,
     });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Upload failed: ${error}`);
-    }
+    try {
+      // The SDK handles file uploads automatically
+      // We just need to pass the buffer or file directly
+      let uploadUrl: string;
+      
+      if (audioFile instanceof Buffer) {
+        console.log('📤 [AssemblyAI] Uploading buffer...');
+        uploadUrl = await this.client.files.upload(audioFile);
+      } else {
+        console.log('📤 [AssemblyAI] Uploading File object...');
+        // For File objects, we need to convert to buffer first
+        const arrayBuffer = await audioFile.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        uploadUrl = await this.client.files.upload(buffer);
+      }
 
-    const result = await response.json();
-    return result.upload_url;
+      console.log('✅ [AssemblyAI] Upload successful:', uploadUrl);
+      return uploadUrl;
+      
+    } catch (error) {
+      console.error('❌ [AssemblyAI] Upload failed:', error);
+      throw new Error(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   /**
-   * Start transcription job
+   * Start transcription job using official SDK
    */
   async startTranscription(
     uploadUrl: string, 
     options: Partial<TranscriptionOptions> = {}
   ): Promise<string> {
-    const defaultOptions: TranscriptionOptions = {
+    console.log('🔄 [AssemblyAI] Starting transcription...');
+    
+    const defaultOptions = {
       speaker_labels: true,
       auto_chapters: false,
       auto_highlights: false,
@@ -107,73 +116,58 @@ export class AssemblyAIService {
     };
 
     const transcriptionOptions = { ...defaultOptions, ...options };
+    
+    console.log('📊 [AssemblyAI] Transcription options:', transcriptionOptions);
 
-    const response = await fetch(`${this.baseUrl}/transcript`, {
-      method: 'POST',
-      headers: {
-        'Authorization': this.apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        audio_url: uploadUrl,
+    try {
+      const transcript = await this.client.transcripts.submit({
+        audio: uploadUrl,
         ...transcriptionOptions,
-      }),
-    });
+      });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Transcription start failed: ${error}`);
+      console.log('✅ [AssemblyAI] Transcription started:', transcript.id);
+      return transcript.id;
+      
+    } catch (error) {
+      console.error('❌ [AssemblyAI] Transcription start failed:', error);
+      throw new Error(`Transcription start failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-
-    const result = await response.json();
-    return result.id;
   }
 
   /**
-   * Get transcription result
+   * Get transcription result using official SDK
    */
   async getTranscript(transcriptId: string): Promise<TranscriptResult> {
-    const response = await fetch(`${this.baseUrl}/transcript/${transcriptId}`, {
-      headers: {
-        'Authorization': this.apiKey,
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Get transcript failed: ${error}`);
+    try {
+      const transcript = await this.client.transcripts.get(transcriptId);
+      return transcript as TranscriptResult;
+    } catch (error) {
+      console.error('❌ [AssemblyAI] Get transcript failed:', error);
+      throw new Error(`Get transcript failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-
-    return response.json();
   }
 
   /**
-   * Poll transcription status until completion
+   * Poll transcription status until completion using official SDK
    */
   async pollTranscriptionStatus(
     transcriptId: string,
     maxRetries: number = 60,
     intervalMs: number = 5000
   ): Promise<TranscriptResult> {
-    let retries = 0;
-
-    while (retries < maxRetries) {
-      const transcript = await this.getTranscript(transcriptId);
-
-      if (transcript.status === 'completed') {
-        return transcript;
-      }
-
-      if (transcript.status === 'error') {
-        throw new Error(`Transcription failed: ${transcript.id}`);
-      }
-
-      // Wait before next poll
-      await new Promise(resolve => setTimeout(resolve, intervalMs));
-      retries++;
+    try {
+      console.log('🔄 [AssemblyAI] Polling transcription status...');
+      const transcript = await this.client.transcripts.waitUntilReady(transcriptId, {
+        pollingInterval: intervalMs,
+        pollingTimeout: maxRetries * intervalMs,
+      });
+      
+      console.log('✅ [AssemblyAI] Transcription completed:', transcript.id);
+      return transcript as TranscriptResult;
+    } catch (error) {
+      console.error('❌ [AssemblyAI] Polling failed:', error);
+      throw new Error(`Transcription failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-
-    throw new Error(`Transcription timed out after ${maxRetries} retries`);
   }
 
   /**
@@ -189,19 +183,15 @@ export class AssemblyAIService {
   }
 
   /**
-   * Delete transcript
+   * Delete transcript using official SDK
    */
   async deleteTranscript(transcriptId: string): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/transcript/${transcriptId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': this.apiKey,
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Delete transcript failed: ${error}`);
+    try {
+      await this.client.transcripts.delete(transcriptId);
+      console.log('✅ [AssemblyAI] Transcript deleted:', transcriptId);
+    } catch (error) {
+      console.error('❌ [AssemblyAI] Delete transcript failed:', error);
+      throw new Error(`Delete transcript failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }

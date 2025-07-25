@@ -12,11 +12,15 @@ import { auth } from '@/server/auth';
  */
 
 export async function POST(request: NextRequest) {
+  console.log('🔄 [UPLOAD API] Starting upload request...');
+  
   try {
     // Check authentication
     const session = await auth();
+    console.log('🔑 [UPLOAD API] Session check:', session ? 'Found' : 'Missing');
     
     if (!session?.user) {
+      console.log('❌ [UPLOAD API] Authentication failed - no session or user');
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -24,9 +28,11 @@ export async function POST(request: NextRequest) {
     }
     
     const user = session.user;
+    console.log('👤 [UPLOAD API] User:', user.email);
 
     // Parse form data
     const formData = await request.formData();
+    console.log('📊 [UPLOAD API] Form data keys:', Array.from(formData.keys()));
     
     // Extract recording metadata
     const teacherId = formData.get('teacherId') as string || user.id;
@@ -35,6 +41,17 @@ export async function POST(request: NextRequest) {
     const timestamp = formData.get('timestamp') as string;
     const recordingId = formData.get('recordingId') as string;
     const audioFile = formData.get('audio') as File;
+    
+    console.log('📋 [UPLOAD API] Metadata:', {
+      teacherId,
+      duration,
+      selectedDuration,
+      timestamp,
+      recordingId,
+      audioFileName: audioFile?.name,
+      audioFileSize: audioFile?.size,
+      audioFileType: audioFile?.type
+    });
 
     // Validate required fields
     if (!teacherId) {
@@ -137,6 +154,12 @@ export async function POST(request: NextRequest) {
     // Start AI analysis with Assembly AI
     try {
       const apiKey = process.env.ASSEMBLY_AI_API_KEY;
+      console.log('🔧 [UPLOAD API] Environment check:', {
+        apiKeySet: !!apiKey,
+        apiKeyLength: apiKey?.length || 0,
+        apiKeyPreview: apiKey ? `${apiKey.substring(0, 8)}...` : 'MISSING'
+      });
+      
       if (!apiKey) {
         throw new Error('Assembly AI API key not configured');
       }
@@ -214,7 +237,8 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Recording upload error:', error);
+    console.error('❌ [UPLOAD API] Critical error:', error);
+    console.error('❌ [UPLOAD API] Error stack:', error instanceof Error ? error.stack : 'No stack available');
     
     return NextResponse.json(
       { 
