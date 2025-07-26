@@ -3,12 +3,14 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Clock, Play, X } from 'lucide-react';
 
 export interface RecordingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onStartRecording: (duration: number) => void;
+  onStartRecording: (duration: number, name: string) => void;
 }
 
 export interface DurationOption {
@@ -42,6 +44,7 @@ const DURATION_OPTIONS: DurationOption[] = [
 
 export function RecordingModal({ isOpen, onClose, onStartRecording }: RecordingModalProps) {
   const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
+  const [recordingName, setRecordingName] = useState('');
 
   if (!isOpen) return null;
 
@@ -50,16 +53,18 @@ export function RecordingModal({ isOpen, onClose, onStartRecording }: RecordingM
   };
 
   const handleStartRecording = () => {
-    if (selectedDuration) {
-      onStartRecording(selectedDuration);
+    if (selectedDuration && recordingName.trim()) {
+      onStartRecording(selectedDuration, recordingName.trim());
       onClose();
       setSelectedDuration(null);
+      setRecordingName('');
     }
   };
 
   const handleClose = () => {
     onClose();
     setSelectedDuration(null);
+    setRecordingName('');
   };
 
   const selectedOption = DURATION_OPTIONS.find(option => option.minutes === selectedDuration);
@@ -88,6 +93,22 @@ export function RecordingModal({ isOpen, onClose, onStartRecording }: RecordingM
         </CardHeader>
         
         <CardContent className="space-y-6">
+          {/* Recording Name Input */}
+          <div className="space-y-3">
+            <Label htmlFor="recording-name">Recording Name</Label>
+            <Input
+              id="recording-name"
+              type="text"
+              placeholder="e.g., Math Review - Fractions"
+              value={recordingName}
+              onChange={(e) => setRecordingName(e.target.value)}
+              className="w-full"
+            />
+            <p className="text-xs text-slate-500">
+              Give your recording a meaningful name to help you find it later.
+            </p>
+          </div>
+
           {/* Duration Selection Buttons */}
           <div className="grid grid-cols-2 gap-3">
             {DURATION_OPTIONS.map((option) => (
@@ -161,17 +182,19 @@ export function RecordingModal({ isOpen, onClose, onStartRecording }: RecordingM
             </Button>
             <Button
               onClick={handleStartRecording}
-              disabled={!selectedDuration}
+              disabled={!selectedDuration || !recordingName.trim()}
               className={`flex-1 ${
-                selectedDuration
+                selectedDuration && recordingName.trim()
                   ? 'bg-red-600 hover:bg-red-700 text-white'
                   : 'bg-slate-300 text-slate-500 cursor-not-allowed'
               }`}
             >
               <Play className="h-4 w-4 mr-2" />
-              {selectedDuration 
-                ? `Start ${selectedOption?.totalMinutes}min Recording`
-                : 'Select Duration'
+              {!recordingName.trim() 
+                ? 'Enter Recording Name' 
+                : !selectedDuration
+                ? 'Select Duration'
+                : `Start ${selectedOption?.totalMinutes}min Recording`
               }
             </Button>
           </div>

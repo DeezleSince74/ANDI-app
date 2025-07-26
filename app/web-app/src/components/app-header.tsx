@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Bell, Upload, Mic } from "lucide-react"
+import { Upload, Mic } from "lucide-react"
 import { Button } from "~/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar"
 import {
@@ -21,6 +21,8 @@ import RecordingModal from "~/components/recording/RecordingModal"
 import FloatingRecorder from "~/components/recording/FloatingRecorder"
 import RecordingNotification from "~/components/recording/RecordingNotification"
 import StopConfirmationModal from "~/components/recording/StopConfirmationModal"
+import ProcessingWidget from "~/components/recording/ProcessingWidget"
+import { NotificationBell } from "~/components/notifications/notification-bell"
 
 export function AppHeader() {
   const { data: session } = useSession()
@@ -30,6 +32,7 @@ export function AppHeader() {
     isRecordingModalOpen,
     isStopConfirmationOpen,
     notificationState,
+    processingWidget,
     startRecording,
     pauseRecording,
     resumeRecording,
@@ -41,6 +44,8 @@ export function AppHeader() {
     closeRecordingModal,
     closeStopConfirmation,
     hideNotification,
+    showProcessingWidget,
+    hideProcessingWidget,
   } = useRecording()
   
   const getInitials = (name: string | null | undefined) => {
@@ -53,10 +58,10 @@ export function AppHeader() {
       .slice(0, 2)
   }
 
-  const handleStartRecording = async (duration: number) => {
+  const handleStartRecording = async (duration: number, name: string) => {
     if (session?.user?.id) {
       try {
-        await startRecording(duration, session.user.id)
+        await startRecording(duration, session.user.id, name)
       } catch (error) {
         console.error('Failed to start recording:', error)
       }
@@ -90,14 +95,7 @@ export function AppHeader() {
             </span>
           </Button>
           
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative"
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 animate-pulse" />
-          </Button>
+          <NotificationBell userId={session?.user?.id} />
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -151,6 +149,7 @@ export function AppHeader() {
         isOpen={isUploadModalOpen}
         onClose={closeUploadModal}
         teacherId={session?.user?.id || ''}
+        onUploadSuccess={showProcessingWidget}
       />
 
       <RecordingModal
@@ -182,6 +181,20 @@ export function AppHeader() {
         type={notificationState.type || 'ended'}
         onClose={hideNotification}
       />
+
+      {/* Processing Widget */}
+      {processingWidget.isVisible && processingWidget.session && (
+        <ProcessingWidget
+          sessionId={processingWidget.session.sessionId}
+          transcriptId={processingWidget.session.transcriptId}
+          recordingName={processingWidget.session.recordingName}
+          onClose={hideProcessingWidget}
+          onComplete={(sessionId) => {
+            console.log('Processing completed for session:', sessionId);
+            // Could show success notification or navigate to results
+          }}
+        />
+      )}
     </header>
   )
 }

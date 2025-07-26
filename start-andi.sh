@@ -179,6 +179,7 @@ if [[ "$CLEAN_START" == "true" ]]; then
     docker-compose -f app/data-warehouse/docker-compose.yml down -v 2>/dev/null || true
     docker-compose -f app/data-pipelines/docker-compose.yml down -v 2>/dev/null || true
     docker-compose -f app/open-llm-app/docker-compose.yml down -v 2>/dev/null || true
+    docker-compose -f app/web-app/docker-compose.yml down -v 2>/dev/null || true
     
     success "Cleanup completed"
 fi
@@ -247,7 +248,7 @@ start_database() {
 
 # Function to start web application
 start_web_app() {
-    log "🌐 Starting Next.js web application..."
+    log "🌐 Starting Next.js web application (containerized)..."
     
     cd "$SCRIPT_DIR/app/web-app"
     
@@ -260,26 +261,19 @@ start_web_app() {
         warning "Please review and update app/web-app/.env.local with your configuration"
     fi
     
-    # Check if node_modules exists
-    if [[ ! -d "node_modules" ]]; then
-        log "Installing web app dependencies..."
-        npm install
-    fi
-    
-    # Start web application
+    # Start web application using docker-compose
     if [[ "$DETACHED" == "true" ]]; then
-        npm run dev > "$LOG_DIR/web-app.log" 2>&1 &
-        echo $! > "$PID_DIR/web-app.pid"
+        docker-compose up -d > "$LOG_DIR/web-app.log" 2>&1
     else
-        npm run dev
+        docker-compose up
     fi
     
     # Health check
     if [[ "$SKIP_HEALTH_CHECK" != "true" ]]; then
-        log "⏳ Waiting for web app to be ready..."
-        sleep 10
+        log "⏳ Waiting for containerized web app to be ready..."
+        sleep 15
         
-        local retries=30
+        local retries=45
         while ! curl -s http://localhost:${ANDI_PORT:-3000} > /dev/null 2>&1 && [[ $retries -gt 0 ]]; do
             sleep 2
             ((retries--))
@@ -293,7 +287,7 @@ start_web_app() {
     
     success "Web application started successfully"
     info "Web App: http://localhost:${ANDI_PORT:-3000}"
-    info "Built with Next.js 15 + Auth.js + TypeScript"
+    info "Built with Next.js 15 + Auth.js + TypeScript (Containerized)"
     
     cd "$SCRIPT_DIR"
 }
@@ -533,8 +527,8 @@ else
 fi
 
 # Web app status
-if lsof -ti:${ANDI_PORT:-3000} >/dev/null 2>&1; then
-    success "Web App: Running (Next.js 15 + Auth.js)"
+if docker ps --format "table {{.Names}}" | grep -q "andi-web-app"; then
+    success "Web App: Running (Next.js 15 + Auth.js - Containerized)"
 else
     warning "Web App: Not running"
 fi

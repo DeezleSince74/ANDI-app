@@ -4,6 +4,12 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { recordingService, RecordingState, RecordingEvent } from '@/services/RecordingService';
 import { toast } from 'sonner';
 
+interface ProcessingSession {
+  sessionId: string;
+  transcriptId?: string;
+  recordingName: string;
+}
+
 interface RecordingContextType {
   recordingState: RecordingState;
   isUploadModalOpen: boolean;
@@ -13,7 +19,11 @@ interface RecordingContextType {
     isVisible: boolean;
     type: 'ended' | 'uploaded' | null;
   };
-  startRecording: (duration: number, teacherId: string) => Promise<void>;
+  processingWidget: {
+    isVisible: boolean;
+    session: ProcessingSession | null;
+  };
+  startRecording: (duration: number, teacherId: string, displayName: string) => Promise<void>;
   stopRecording: () => void;
   confirmStopRecording: () => void;
   pauseRecording: () => void;
@@ -26,6 +36,8 @@ interface RecordingContextType {
   closeStopConfirmation: () => void;
   showNotification: (type: 'ended' | 'uploaded') => void;
   hideNotification: () => void;
+  showProcessingWidget: (session: ProcessingSession) => void;
+  hideProcessingWidget: () => void;
 }
 
 const RecordingContext = createContext<RecordingContextType | undefined>(undefined);
@@ -54,6 +66,14 @@ export function RecordingProvider({ children }: RecordingProviderProps) {
   }>({
     isVisible: false,
     type: null
+  });
+
+  const [processingWidget, setProcessingWidget] = useState<{
+    isVisible: boolean;
+    session: ProcessingSession | null;
+  }>({
+    isVisible: false,
+    session: null
   });
 
   useEffect(() => {
@@ -116,7 +136,7 @@ export function RecordingProvider({ children }: RecordingProviderProps) {
 
     // Listen for service worker upload status
     const handleServiceWorkerMessage = (event: MessageEvent) => {
-      const { type } = event.data;
+      const { type, sessionId, transcriptId, recordingName } = event.data;
       
       if (type === 'UPLOAD_SUCCESS') {
         toast.success('Recording uploaded successfully!', {
@@ -127,6 +147,15 @@ export function RecordingProvider({ children }: RecordingProviderProps) {
           isVisible: true,
           type: 'uploaded'
         });
+        
+        // Show processing widget if we have session data
+        if (sessionId) {
+          showProcessingWidget({
+            sessionId,
+            transcriptId,
+            recordingName: recordingName || 'Recording'
+          });
+        }
       } else if (type === 'UPLOAD_FAILED') {
         toast.error('Failed to upload recording. Will retry automatically.', {
           duration: 5000,
@@ -152,11 +181,12 @@ export function RecordingProvider({ children }: RecordingProviderProps) {
     };
   }, []);
 
-  const startRecording = async (duration: number, teacherId: string) => {
+  const startRecording = async (duration: number, teacherId: string, displayName: string) => {
     try {
       await recordingService.startRecording({
         selectedDuration: duration,
         teacherId,
+        displayName,
         autoStop: true
       });
       
@@ -242,12 +272,27 @@ export function RecordingProvider({ children }: RecordingProviderProps) {
     });
   };
 
+  const showProcessingWidget = (session: ProcessingSession) => {
+    setProcessingWidget({
+      isVisible: true,
+      session
+    });
+  };
+
+  const hideProcessingWidget = () => {
+    setProcessingWidget({
+      isVisible: false,
+      session: null
+    });
+  };
+
   const value: RecordingContextType = {
     recordingState,
     isUploadModalOpen,
     isRecordingModalOpen,
     isStopConfirmationOpen,
     notificationState,
+    processingWidget,
     startRecording,
     stopRecording,
     confirmStopRecording,
@@ -261,6 +306,8 @@ export function RecordingProvider({ children }: RecordingProviderProps) {
     closeStopConfirmation,
     showNotification,
     hideNotification,
+    showProcessingWidget,
+    hideProcessingWidget,
   };
 
   return (

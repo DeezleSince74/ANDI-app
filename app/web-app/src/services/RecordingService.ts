@@ -8,6 +8,7 @@ import { storageService, RecordingMetadata } from './StorageService';
 export interface RecordingConfig {
   selectedDuration: number; // Duration in minutes (30, 45, 60, 90)
   teacherId: string;
+  displayName: string; // User-provided name for the recording
   autoStop?: boolean;
 }
 
@@ -470,6 +471,7 @@ class RecordingService {
       const metadata: RecordingMetadata = {
         id: this.state.recordingId!,
         teacherId: this.config!.teacherId,
+        displayName: this.config!.displayName,
         duration: this.state.duration,
         selectedDuration: this.state.selectedDuration * 60, // Convert to seconds
         timestamp: new Date().toISOString(),

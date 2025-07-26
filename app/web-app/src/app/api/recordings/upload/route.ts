@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
     const selectedDuration = parseInt(formData.get('selectedDuration') as string) || 0;
     const timestamp = formData.get('timestamp') as string;
     const recordingId = formData.get('recordingId') as string;
+    const displayName = formData.get('displayName') as string || 'Untitled Recording';
     const audioFile = formData.get('audio') as File;
     
     console.log('📋 [UPLOAD API] Metadata:', {
@@ -48,6 +49,7 @@ export async function POST(request: NextRequest) {
       selectedDuration,
       timestamp,
       recordingId,
+      displayName,
       audioFileName: audioFile?.name,
       audioFileSize: audioFile?.size,
       audioFileType: audioFile?.type
@@ -137,6 +139,7 @@ export async function POST(request: NextRequest) {
     const recordingMetadata = {
       id: recordingId,
       teacherId,
+      displayName,
       fileName,
       filePath: filePath,
       fileSize: audioFile.size,
@@ -204,6 +207,7 @@ export async function POST(request: NextRequest) {
         message: 'Recording uploaded and transcription started',
         metadata: {
           fileName,
+          displayName,
           fileSize: audioFile.size,
           duration,
           selectedDuration,
@@ -227,6 +231,7 @@ export async function POST(request: NextRequest) {
         message: 'Recording uploaded successfully, but transcription failed to start',
         metadata: {
           fileName,
+          displayName,
           fileSize: audioFile.size,
           duration,
           selectedDuration,

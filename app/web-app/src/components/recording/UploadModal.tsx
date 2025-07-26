@@ -3,19 +3,29 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Upload, X, FileAudio, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+
+interface ProcessingSession {
+  sessionId: string;
+  transcriptId?: string;
+  recordingName: string;
+}
 
 export interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   teacherId: string;
+  onUploadSuccess?: (session: ProcessingSession) => void;
 }
 
-export function UploadModal({ isOpen, onClose, teacherId }: UploadModalProps) {
+export function UploadModal({ isOpen, onClose, teacherId, onUploadSuccess }: UploadModalProps) {
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [recordingName, setRecordingName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -94,6 +104,7 @@ export function UploadModal({ isOpen, onClose, teacherId }: UploadModalProps) {
       formData.append('recordingId', `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
       formData.append('duration', '0'); // Unknown duration for uploads
       formData.append('selectedDuration', '0'); // Not applicable for uploads
+      formData.append('displayName', recordingName.trim()); // Add the recording name
 
       // Simulate progress for better UX
       const progressInterval = setInterval(() => {
@@ -128,20 +139,20 @@ export function UploadModal({ isOpen, onClose, teacherId }: UploadModalProps) {
         duration: 3000,
       });
 
-      // Auto-close and redirect to processing status
+      // Auto-close and show processing widget
       setTimeout(() => {
         onClose();
         resetModal();
         
-        // Redirect to processing status page if we have a sessionId
-        if (result.sessionId) {
-          const url = result.transcriptId 
-            ? `/processing/${result.sessionId}?transcriptId=${result.transcriptId}`
-            : `/processing/${result.sessionId}`;
-          console.log('Redirecting to:', url); // Debug log
-          window.location.href = url;
+        // Show processing widget if we have a sessionId and callback
+        if (result.sessionId && onUploadSuccess) {
+          onUploadSuccess({
+            sessionId: result.sessionId,
+            transcriptId: result.transcriptId,
+            recordingName: recordingName.trim() || 'Untitled Recording'
+          });
         } else {
-          console.log('No sessionId in response, not redirecting'); // Debug log
+          console.log('No sessionId in response or callback not provided'); // Debug log
         }
       }, 2000);
 
@@ -161,6 +172,7 @@ export function UploadModal({ isOpen, onClose, teacherId }: UploadModalProps) {
     setUploadState('idle');
     setUploadProgress(0);
     setError(null);
+    setRecordingName('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -202,6 +214,22 @@ export function UploadModal({ isOpen, onClose, teacherId }: UploadModalProps) {
         <CardContent className="space-y-4">
           {uploadState === 'idle' && (
             <>
+              {/* Recording Name Input */}
+              <div className="space-y-3">
+                <Label htmlFor="recording-name">Recording Name</Label>
+                <Input
+                  id="recording-name"
+                  type="text"
+                  placeholder="e.g., Guest Speaker - Environmental Science"
+                  value={recordingName}
+                  onChange={(e) => setRecordingName(e.target.value)}
+                  className="w-full"
+                />
+                <p className="text-xs text-slate-500">
+                  Give your recording a meaningful name to help you find it later.
+                </p>
+              </div>
+
               {/* File Drop Zone */}
               <div
                 className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-slate-400 transition-colors cursor-pointer"
@@ -345,10 +373,10 @@ export function UploadModal({ isOpen, onClose, teacherId }: UploadModalProps) {
               </Button>
               <Button
                 onClick={handleUpload}
-                disabled={!selectedFile}
+                disabled={!selectedFile || !recordingName.trim()}
                 className="flex-1"
               >
-                Upload
+                {!recordingName.trim() ? 'Enter Recording Name' : 'Upload'}
               </Button>
             </div>
           )}

@@ -42,17 +42,14 @@ function OnboardingContent({ children }: { children: ReactNode }) {
       .slice(0, 2)
   }
 
-  // Mock teacher data for development - replace with real session data when auth is fully implemented
-  const mockTeacher = {
-    name: "Sarah Johnson",
-    email: "sarah.johnson@school.edu",
-    image: null // Will use initials fallback
+  // Use session data or fallback to generic values
+  const teacher = session?.user || {
+    name: "Teacher",
+    email: "",
+    image: null
   }
-
-  // Use mock data if no session available, otherwise use session data
-  const teacher = session?.user || mockTeacher
   
-  // Use onboarding avatar if available, otherwise fall back to session/mock image
+  // Use onboarding avatar if available, otherwise fall back to session image
   const avatarUrl = onboardingData.avatarUrl || teacher?.image
 
   return (

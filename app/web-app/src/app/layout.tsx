@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
+import { BodyWithExtensionSupport } from "@/components/BodyWithExtensionSupport";
 import "./globals.css";
 
 const inter = Inter({
@@ -75,11 +76,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="font-sans antialiased">
+      <BodyWithExtensionSupport className="font-sans antialiased">
         <SessionProvider>
           {children}
         </SessionProvider>
-      </body>
+      </BodyWithExtensionSupport>
     </html>
   );
 }

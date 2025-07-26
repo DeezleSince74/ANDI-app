@@ -23,16 +23,16 @@ app.prepare().then(() => {
     }
   });
 
-  // Initialize WebSocket service
-  const initializeWebSocket = async () => {
+  // Initialize real-time system
+  const initializeRealtimeSystem = async () => {
     try {
-      // Dynamic import to avoid module resolution issues
-      const { webSocketService } = await import('./src/services/ai/WebSocketService.js');
-      webSocketService.initialize(httpServer);
-      console.log('✓ WebSocket service initialized');
+      // Import and initialize our new real-time system
+      const { initializeRealtimeSystem } = await import('./src/lib/realtime-startup.js');
+      await initializeRealtimeSystem();
+      console.log('✓ Real-time system (PostgreSQL + WebSocket) initialized');
     } catch (error) {
-      console.error('Failed to initialize WebSocket service:', error);
-      console.log('WebSocket functionality will be disabled');
+      console.error('Failed to initialize real-time system:', error);
+      console.log('Real-time features will be disabled, falling back to polling');
     }
   };
 
@@ -45,8 +45,8 @@ app.prepare().then(() => {
     .listen(port, () => {
       console.log(`> Ready on http://${hostname}:${port}`);
       
-      // Initialize WebSocket after server starts
-      initializeWebSocket();
+      // Initialize real-time system after server starts
+      initializeRealtimeSystem();
     });
 
   // Graceful shutdown

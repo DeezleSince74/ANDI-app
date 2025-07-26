@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AssemblyAIService } from '@/services/ai/AssemblyAIService';
+import { OllamaService } from '@/services/ai/OllamaService';
 import { auth } from '@/server/auth';
+import { getRecordingBySessionId, updateRecording, createAIJob } from '~/db/repositories/recordings';
 
 export async function GET(
   request: NextRequest,
@@ -19,19 +21,24 @@ export async function GET(
 
     const { sessionId } = params;
     
-    // Extract transcript ID from session ID (format: analysis_recordingId)
-    // In a real app, you'd fetch this from the database
-    // For now, we'll need to pass the transcript ID via query params
-    const transcriptId = request.nextUrl.searchParams.get('transcriptId');
+    // Fetch recording from database
+    const recording = await getRecordingBySessionId(sessionId);
+    
+    if (!recording) {
+      return NextResponse.json({
+        error: 'Recording not found',
+      }, { status: 404 });
+    }
+    
+    const transcriptId = recording.transcriptId;
     
     if (!transcriptId) {
-      // TODO: Look up transcript ID from database using sessionId
       return NextResponse.json({
         sessionId,
         status: 'transcribing',
         progress: 15,
         currentStep: 'Processing audio file...',
-        message: 'Transcript ID not found. In production, this would be fetched from the database.',
+        message: 'Transcription not yet started.',
       });
     }
 
@@ -61,11 +68,20 @@ export async function GET(
         currentStep = 'Transcribing audio...';
         break;
       case 'completed':
-        // In a real app, you'd check if CIQ analysis and coaching are done
-        // For now, we'll just show transcription as complete
-        mappedStatus = 'completed';
-        progress = 100;
-        currentStep = 'All processing complete!';
+        // Check if LLM analysis has been completed
+        if (recording.ciqData && recording.coachingInsights) {
+          mappedStatus = 'completed';
+          progress = 100;
+          currentStep = 'All processing complete!';
+        } else {
+          // Transcription complete, now trigger LLM analysis
+          mappedStatus = 'analyzing';
+          progress = 70;
+          currentStep = 'Analyzing with AI Coach...';
+          
+          // Start LLM analysis in background
+          triggerLLMAnalysis(sessionId, transcriptId, transcript);
+        }
         break;
       case 'error':
         mappedStatus = 'failed';
@@ -98,17 +114,30 @@ export async function GET(
         sentimentAnalysis: transcript.sentiment_analysis_results,
       };
 
-      // TODO: In production, you'd trigger CIQ analysis here
-      // For now, we'll just mark it as complete
-      response.analysis = {
-        status: 'pending',
-        message: 'CIQ analysis would be triggered here',
-      };
+      // Include CIQ analysis and coaching if available
+      if (recording.ciqData) {
+        response.analysis = {
+          status: 'completed',
+          data: recording.ciqData,
+        };
+      } else {
+        response.analysis = {
+          status: 'processing',
+          message: 'AI analysis in progress...',
+        };
+      }
       
-      response.coaching = {
-        status: 'pending',
-        message: 'Coaching insights would be generated here',
-      };
+      if (recording.coachingInsights) {
+        response.coaching = {
+          status: 'completed',
+          data: recording.coachingInsights,
+        };
+      } else {
+        response.coaching = {
+          status: 'processing',
+          message: 'AI coaching insights being generated...',
+        };
+      }
     }
 
     // Include error if failed
@@ -128,5 +157,88 @@ export async function GET(
       },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Trigger LLM analysis in background
+ */
+async function triggerLLMAnalysis(sessionId: string, transcriptId: string, transcript: any) {
+  try {
+    console.log(`🧠 [LLM ANALYSIS] Starting AI analysis for session ${sessionId}`);
+    
+    // Initialize Ollama service
+    const ollamaUrl = process.env.OLLAMA_API_URL || 'http://localhost:11434';
+    const ollama = new OllamaService(ollamaUrl);
+    
+    // Check if Ollama is available
+    const isHealthy = await ollama.healthCheck();
+    if (!isHealthy) {
+      console.error('❌ [LLM ANALYSIS] Ollama service not available');
+      return;
+    }
+    
+    // Create AI job for CIQ analysis
+    await createAIJob({
+      sessionId,
+      userId: '', // Will be set by the database function
+      jobType: 'ciq_analysis',
+      status: 'processing',
+      progress: 0,
+      externalId: transcriptId,
+      metadata: {
+        transcriptId,
+        stage: 'ciq_analysis'
+      }
+    });
+    
+    // Run CIQ analysis
+    console.log('🔍 [LLM ANALYSIS] Analyzing transcript with CIQ framework...');
+    const ciqAnalysis = await ollama.analyzeTranscript(transcript, sessionId);
+    console.log('✅ [LLM ANALYSIS] CIQ analysis completed');
+    
+    // Create AI job for coaching
+    await createAIJob({
+      sessionId,
+      userId: '', // Will be set by the database function
+      jobType: 'coaching',
+      status: 'processing',
+      progress: 0,
+      externalId: transcriptId,
+      metadata: {
+        transcriptId,
+        stage: 'coaching'
+      }
+    });
+    
+    // Generate coaching insights
+    console.log('🎯 [LLM ANALYSIS] Generating coaching insights...');
+    const coachingResult = await ollama.generateCoaching(ciqAnalysis, transcript);
+    console.log('✅ [LLM ANALYSIS] Coaching insights generated');
+    
+    // Update recording with results
+    await updateRecording(sessionId, {
+      ciqData: ciqAnalysis,
+      coachingInsights: coachingResult,
+      ciqScore: ciqAnalysis.overallScore,
+      status: 'completed'
+    });
+    
+    console.log(`🎉 [LLM ANALYSIS] Analysis complete for session ${sessionId}`);
+    
+  } catch (error) {
+    console.error('❌ [LLM ANALYSIS] Error during analysis:', error);
+    
+    // Update recording status to show analysis failed
+    try {
+      await updateRecording(sessionId, {
+        status: 'completed', // Keep as completed since transcription worked
+        metadata: {
+          analysisError: error instanceof Error ? error.message : 'Analysis failed'
+        }
+      });
+    } catch (updateError) {
+      console.error('❌ [LLM ANALYSIS] Failed to update recording status:', updateError);
+    }
   }
 }

@@ -7,7 +7,7 @@ import {
   Home,
   TrendingUp,
   Lightbulb,
-  BookOpen,
+  Mic,
   Users,
   FolderOpen,
   Settings,
@@ -45,9 +45,9 @@ const navigation = [
     icon: Lightbulb,
   },
   {
-    name: "Logbook",
-    href: "/logbook",
-    icon: BookOpen,
+    name: "Recordings",
+    href: "/recordings",
+    icon: Mic,
   },
   {
     name: "Resources",

@@ -6,6 +6,7 @@
 export interface RecordingMetadata {
   id: string;
   teacherId: string;
+  displayName: string; // User-provided name for the recording
   duration: number; // actual recording duration in seconds
   selectedDuration: number; // user-selected duration + buffer in seconds
   timestamp: string; // ISO string

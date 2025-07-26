@@ -7,6 +7,7 @@ import { redirectToOnboardingIfNeeded } from "~/lib/onboarding-check"
 import { SessionProvider } from "next-auth/react"
 import { RecordingProvider } from "~/lib/recording-context"
 import { Toaster } from "sonner"
+import { initializeRealtimeSystem } from "~/lib/realtime-startup"
 
 export default async function AuthenticatedLayout({
   children,
@@ -32,6 +33,10 @@ export default async function AuthenticatedLayout({
   // Check if user needs onboarding
   console.log('🎯 [AUTH-LAYOUT] Checking onboarding requirements')
   await redirectToOnboardingIfNeeded()
+  
+  // Initialize real-time system (PostgreSQL listener + WebSocket)
+  console.log('🔄 [AUTH-LAYOUT] Initializing real-time system')
+  await initializeRealtimeSystem()
   
   console.log('🎉 [AUTH-LAYOUT] Authentication successful, rendering layout')
 
