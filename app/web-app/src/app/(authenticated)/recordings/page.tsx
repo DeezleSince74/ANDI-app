@@ -69,15 +69,15 @@ function getStatusBadge(recording: Recording) {
     return <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">Processing</Badge>;
   }
   if (recording.status === 'failed') {
-    return <Badge variant="destructive">Failed</Badge>;
+    return <Badge variant="destructive" className="bg-red-600 text-white border-red-600">Failed</Badge>;
   }
   return <Badge variant="outline">Pending</Badge>;
 }
 
 function getSourceIcon(sourceType: 'recorded' | 'uploaded') {
   return sourceType === 'recorded' ? 
-    <Mic className="h-4 w-4 text-blue-600" /> : 
-    <Upload className="h-4 w-4 text-green-600" />;
+    <Mic className="h-4 w-4 text-slate-400" /> : 
+    <Upload className="h-4 w-4 text-slate-400" />;
 }
 
 export default function RecordingsPage() {
@@ -181,7 +181,12 @@ export default function RecordingsPage() {
               {currentWeekRecordings.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-slate-500">
-                    No recordings this week
+                    <div className="space-y-2">
+                      <p>No recordings this week</p>
+                      <p className="text-xs text-slate-400">
+                        Debug: Fetched {recordings.length} total recordings from API
+                      </p>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -248,28 +253,41 @@ export default function RecordingsPage() {
       </div>
 
       {/* Last Week Section */}
-      {lastWeekRecordings.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-900">Last Week</h2>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-slate-900">Last Week</h2>
+          {lastWeekRecordings.length > 0 && (
             <Button variant="outline" size="sm">
               View Insights →
             </Button>
-          </div>
+          )}
+        </div>
 
-          <Card>
-            <Table>
-              <TableHeader>
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[300px]">Recording Name</TableHead>
+                <TableHead>Date & Time</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {lastWeekRecordings.length === 0 ? (
                 <TableRow>
-                  <TableHead className="w-[300px]">Recording Name</TableHead>
-                  <TableHead>Date & Time</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+                  <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                    <div className="space-y-2">
+                      <p>No recordings last week</p>
+                      <p className="text-xs text-slate-400">
+                        Debug: Found {lastWeekRecordings.length} recordings from last week
+                      </p>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {lastWeekRecordings.map((recording) => (
+              ) : (
+                lastWeekRecordings.map((recording) => (
                   <TableRow key={recording.sessionId}>
                     <TableCell className="font-medium">
                       <div className="flex items-center space-x-3">
@@ -324,12 +342,12 @@ export default function RecordingsPage() {
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
-        </div>
-      )}
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </Card>
+      </div>
     </div>
   );
 }

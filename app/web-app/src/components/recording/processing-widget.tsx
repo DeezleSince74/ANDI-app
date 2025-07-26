@@ -37,46 +37,25 @@ export interface ProcessingWidgetProps {
   userId?: string;
 }
 
-// Mock data for demonstration
-const mockQueueItems: QueueItem[] = [
-  {
-    sessionId: '1',
-    displayName: 'Math Review Session',
-    queuePosition: 1,
-    status: 'processing',
-    progress: 65,
-    estimatedCompletion: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes from now
-    createdAt: new Date(Date.now() - 10 * 60 * 1000) // 10 minutes ago
-  },
-  {
-    sessionId: '2',
-    displayName: 'Science Discussion',
-    queuePosition: 2,
-    status: 'queued',
-    progress: 0,
-    estimatedCompletion: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes from now
-    createdAt: new Date(Date.now() - 5 * 60 * 1000) // 5 minutes ago
-  }
-];
+// TODO: Replace with actual queue data from API
 
 export function ProcessingWidget({ className = '', userId }: ProcessingWidgetProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Function to fetch queue data (replace with your actual API call)
   const fetchQueueData = async (): Promise<QueueItem[]> => {
-    // Simulate API call - replace with your actual endpoint
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Add some random progress updates to simulate real-time changes
-        const updatedItems = mockQueueItems.map(item => ({
-          ...item,
-          progress: item.status === 'processing' 
-            ? Math.min(item.progress + Math.random() * 10, 100) 
-            : item.progress
-        }));
-        resolve(updatedItems);
-      }, 500);
-    });
+    try {
+      // TODO: Replace with actual API call
+      // const response = await fetch(`/api/processing/queue?userId=${userId}`);
+      // const data = await response.json();
+      // return data.queueItems || [];
+      
+      // For now, return empty array for debugging
+      return [];
+    } catch (error) {
+      console.error('Failed to fetch queue data:', error);
+      return [];
+    }
   };
 
   // Use hybrid updates (WebSocket + polling fallback)

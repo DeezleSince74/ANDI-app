@@ -29,7 +29,7 @@ export const users = createTable("user", {
     .$defaultFn(() => crypto.randomUUID()),
   name: varchar("name", { length: 255 }),
   email: varchar("email", { length: 255 }).notNull(),
-  emailVerified: timestamp("emailVerified", {
+  emailVerified: timestamp("email_verified", {
     mode: "date",
     withTimezone: true,
   }),
@@ -37,14 +37,14 @@ export const users = createTable("user", {
   
   // ANDI-specific user fields
   role: varchar("role", { length: 50 }).default("teacher").notNull(),
-  schoolId: varchar("schoolId", { length: 255 }),
-  districtId: varchar("districtId", { length: 255 }),
-  gradeLevels: jsonb("gradeLevels").$type<string[]>(),
+  schoolId: varchar("school_id", { length: 255 }),
+  districtId: varchar("district_id", { length: 255 }),
+  gradeLevels: jsonb("grade_levels").$type<string[]>(),
   subjects: jsonb("subjects").$type<string[]>(),
-  yearsExperience: integer("yearsExperience"),
-  certificationLevel: varchar("certificationLevel", { length: 100 }),
+  yearsExperience: integer("years_experience"),
+  certificationLevel: varchar("certification_level", { length: 100 }),
   preferences: jsonb("preferences").$type<Record<string, unknown>>(),
-  isActive: boolean("isActive").default(true).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
   
   createdAt: timestamp("created_at", { withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)

@@ -6,7 +6,7 @@ import { getRecordingBySessionId, updateRecording, createAIJob } from '~/db/repo
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
     // Check authentication
@@ -19,7 +19,7 @@ export async function GET(
       );
     }
 
-    const { sessionId } = params;
+    const { sessionId } = await params;
     
     // Fetch recording from database
     const recording = await getRecordingBySessionId(sessionId);
@@ -74,13 +74,12 @@ export async function GET(
           progress = 100;
           currentStep = 'All processing complete!';
         } else {
-          // Transcription complete, now trigger LLM analysis
+          // Transcription complete, analysis should be queued automatically
           mappedStatus = 'analyzing';
           progress = 70;
           currentStep = 'Analyzing with AI Coach...';
           
-          // Start LLM analysis in background
-          triggerLLMAnalysis(sessionId, transcriptId, transcript);
+          // Note: Analysis is now handled by the queue system automatically
         }
         break;
       case 'error':

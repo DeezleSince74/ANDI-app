@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/server/auth';
+import { getRecordingsByUser } from '~/db/repositories/recordings';
+import type { RecordingSession } from '~/db/types';
 
 /**
  * ANDI Recordings List API Endpoint
@@ -25,52 +27,30 @@ export async function GET(request: NextRequest) {
     const user = session.user;
     console.log('👤 [RECORDINGS API] User:', user.email);
 
-    // For now, return mock data with current dates
-    // TODO: Replace with actual database query
-    const currentDate = new Date();
-    const thisWeek = new Date(currentDate.getTime() - (7 * 24 * 60 * 60 * 1000));
-    
-    const mockRecordings = [
-      {
-        sessionId: 'session_1',
-        displayName: 'Math Class - Algebra Review',
-        createdAt: new Date(currentDate.getTime() - (1 * 24 * 60 * 60 * 1000)), // 1 day ago
-        duration: 2700, // 45 mins
-        sourceType: 'recorded',
-        status: 'completed',
-        processingStage: 'completed',
-        processingProgress: 100,
-        ciqScore: 85
-      },
-      {
-        sessionId: 'session_2', 
-        displayName: 'Science Discussion - Climate Change',
-        createdAt: new Date(currentDate.getTime() - (2 * 24 * 60 * 60 * 1000)), // 2 days ago
-        duration: 3600, // 1 hour
-        sourceType: 'uploaded',
-        status: 'completed',
-        processingStage: 'completed', 
-        processingProgress: 100,
-        ciqScore: 92
-      },
-      {
-        sessionId: 'session_3',
-        displayName: 'Reading Group - Chapter Discussion',
-        createdAt: new Date(currentDate.getTime() - (3 * 24 * 60 * 60 * 1000)), // 3 days ago
-        duration: 1800, // 30 mins
-        sourceType: 'recorded',
-        status: 'processing',
-        processingStage: 'analyzing',
-        processingProgress: 65,
-      }
-    ];
+    // Query database for user's recordings
+    const dbRecordings = await getRecordingsByUser(user.id);
 
-    console.log('📋 [RECORDINGS API] Returning recordings:', mockRecordings.length);
+    console.log('📋 [RECORDINGS API] Found recordings in database:', dbRecordings.length);
+
+    // Transform database records to match frontend interface
+    const recordings = dbRecordings.map(recording => ({
+      sessionId: recording.sessionId,
+      displayName: recording.title,
+      createdAt: recording.createdAt,
+      duration: recording.duration || 0,
+      sourceType: 'uploaded' as const, // All current recordings are uploaded
+      status: mapDatabaseStatus(recording.status),
+      processingStage: mapProcessingStage(recording.status),
+      processingProgress: getProcessingProgress(recording.status),
+      ciqScore: recording.ciqScore
+    }));
+
+    console.log('📋 [RECORDINGS API] Transformed recordings:', recordings.length);
 
     return NextResponse.json({
       success: true,
-      recordings: mockRecordings,
-      total: mockRecordings.length
+      recordings: recordings,
+      total: recordings.length
     });
 
   } catch (error) {
@@ -84,6 +64,54 @@ export async function GET(request: NextRequest) {
       },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Map database status to frontend status
+ */
+function mapDatabaseStatus(dbStatus: string): 'pending' | 'processing' | 'completed' | 'failed' {
+  switch (dbStatus) {
+    case 'completed':
+      return 'completed';
+    case 'processing':
+      return 'processing';
+    case 'failed':
+      return 'failed';
+    default:
+      return 'pending';
+  }
+}
+
+/**
+ * Map database status to processing stage
+ */
+function mapProcessingStage(dbStatus: string): 'pending' | 'uploading' | 'transcribing' | 'analyzing' | 'completed' | 'failed' {
+  switch (dbStatus) {
+    case 'completed':
+      return 'completed';
+    case 'processing':
+      return 'transcribing'; // Currently processing means transcribing
+    case 'failed':
+      return 'failed';
+    default:
+      return 'pending';
+  }
+}
+
+/**
+ * Get processing progress based on status
+ */
+function getProcessingProgress(dbStatus: string): number {
+  switch (dbStatus) {
+    case 'completed':
+      return 100;
+    case 'processing':
+      return 45; // Assume roughly halfway through transcription
+    case 'failed':
+      return 0;
+    default:
+      return 10; // Just started
   }
 }
 

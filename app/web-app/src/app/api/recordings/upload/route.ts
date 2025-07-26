@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
-import { AssemblyAIService } from '@/services/ai/AssemblyAIService';
 import { auth } from '@/server/auth';
+import { createRecording } from '~/db/repositories/recordings';
+import { enqueueTranscription } from '~/lib/queue/recording-queue';
+import type { CreateRecordingSession } from '~/db/types';
 
 /**
  * ANDI Recording Upload API Endpoint
@@ -154,50 +156,41 @@ export async function POST(request: NextRequest) {
 
     console.log('Recording uploaded successfully:', recordingMetadata);
 
-    // Start AI analysis with Assembly AI
-    try {
-      const apiKey = process.env.ASSEMBLY_AI_API_KEY;
-      console.log('🔧 [UPLOAD API] Environment check:', {
-        apiKeySet: !!apiKey,
-        apiKeyLength: apiKey?.length || 0,
-        apiKeyPreview: apiKey ? `${apiKey.substring(0, 8)}...` : 'MISSING'
-      });
-      
-      if (!apiKey) {
-        throw new Error('Assembly AI API key not configured');
+    // Create session ID for tracking
+    const sessionId = `session_${recordingId}`;
+
+    // Save recording session to database (without transcript ID initially)
+    const recordingData: CreateRecordingSession = {
+      sessionId,
+      userId: user.id,
+      title: displayName,
+      description: `Recording uploaded on ${new Date().toLocaleDateString()}`,
+      audioUrl: filePath,
+      duration,
+      status: 'pending', // Will be updated to 'transcribing' when queue picks it up
+      metadata: {
+        originalFileName: audioFile.name,
+        fileSize: audioFile.size,
+        mimeType: audioFile.type,
+        selectedDuration,
+        uploadedAt: recordingMetadata.uploadedAt,
+        processingStatus: 'queued'
       }
+    };
+    await createRecording(recordingData);
 
-      const assemblyAI = new AssemblyAIService(apiKey);
+    // Enqueue for robust background processing
+    try {
+      console.log('🎯 [UPLOAD API] Enqueuing transcription job...');
+      const jobId = await enqueueTranscription(
+        sessionId,
+        filePath, // Use local file path for now
+        user.id,
+        fileName,
+        'normal' // Could be 'high' for premium users
+      );
       
-      // Read the file buffer
-      const fileBuffer = await readFile(filePath);
-      
-      // Upload to Assembly AI
-      console.log('Uploading to Assembly AI...');
-      const uploadUrl = await assemblyAI.uploadAudio(fileBuffer, fileName);
-      
-      // Start transcription
-      console.log('Starting transcription...');
-      const transcriptId = await assemblyAI.startTranscription(uploadUrl, {
-        speaker_labels: true,
-        sentiment_analysis: true,
-        auto_highlights: true,
-        language_detection: true,
-      });
-
-      console.log(`Transcription started with ID: ${transcriptId}`);
-
-      // Create session ID for tracking
-      const sessionId = `analysis_${recordingId}`;
-
-      // TODO: Save to database
-      // await db.recording.create({
-      //   data: {
-      //     ...recordingMetadata,
-      //     sessionId,
-      //     transcriptId,
-      //   }
-      // });
+      console.log(`✅ [UPLOAD API] Transcription job ${jobId} enqueued for session ${sessionId}`);
 
       return NextResponse.json({
         success: true,
@@ -224,10 +217,38 @@ export async function POST(request: NextRequest) {
     } catch (aiError) {
       console.error('Assembly AI error:', aiError);
       
+      // Still save to database but mark as failed
+      const sessionId = `session_${recordingId}`;
+      
+      try {
+        const failedRecordingData: CreateRecordingSession = {
+          sessionId,
+          userId: user.id,
+          title: displayName,
+          description: `Recording uploaded on ${new Date().toLocaleDateString()} (transcription failed)`,
+          audioUrl: filePath,
+          duration,
+          status: 'failed',
+          metadata: {
+            originalFileName: audioFile.name,
+            fileSize: audioFile.size,
+            mimeType: audioFile.type,
+            selectedDuration,
+            uploadedAt: recordingMetadata.uploadedAt,
+            processingStatus: 'failed',
+            errorMessage: aiError instanceof Error ? aiError.message : 'Failed to start transcription'
+          }
+        };
+        await createRecording(failedRecordingData);
+      } catch (dbError) {
+        console.error('Failed to save recording to database:', dbError);
+      }
+      
       // Still return success for upload, but indicate analysis failed to start
       return NextResponse.json({
         success: true,
         recordingId,
+        sessionId,
         message: 'Recording uploaded successfully, but transcription failed to start',
         metadata: {
           fileName,

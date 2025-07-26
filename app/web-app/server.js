@@ -23,17 +23,21 @@ app.prepare().then(() => {
     }
   });
 
-  // Initialize real-time system
-  const initializeRealtimeSystem = async () => {
+  // Initialize queue workers and real-time system
+  const initializeBackgroundSystems = async () => {
+    // Initialize queue workers first (critical for processing)
     try {
-      // Import and initialize our new real-time system
-      const { initializeRealtimeSystem } = await import('./src/lib/realtime-startup.js');
-      await initializeRealtimeSystem();
-      console.log('✓ Real-time system (PostgreSQL + WebSocket) initialized');
+      console.log('🚀 [SERVER] Initializing queue workers...');
+      const { initializeQueueWorkers } = await import('./src/lib/queue/startup.ts');
+      initializeQueueWorkers();
+      console.log('✅ [SERVER] Queue workers initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize real-time system:', error);
-      console.log('Real-time features will be disabled, falling back to polling');
+      console.error('❌ [SERVER] Failed to initialize queue workers:', error);
     }
+    
+    // Initialize real-time system (non-critical) - temporarily disabled
+    console.log('⚠️ [SERVER] Real-time system temporarily disabled, using polling fallback');
+    console.log('Real-time features will be disabled, falling back to polling');
   };
 
   // Start server
@@ -45,8 +49,8 @@ app.prepare().then(() => {
     .listen(port, () => {
       console.log(`> Ready on http://${hostname}:${port}`);
       
-      // Initialize real-time system after server starts
-      initializeRealtimeSystem();
+      // Initialize background systems after server starts
+      initializeBackgroundSystems();
     });
 
   // Graceful shutdown

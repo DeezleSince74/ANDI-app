@@ -3,7 +3,7 @@
  * Starts PostgreSQL NOTIFY listener and WebSocket connections
  */
 
-import { startPostgreSQLListener } from './database/pg-notify-listener';
+import { startPostgreSQLListener } from './database/pg-notify-listener.js';
 
 export async function initializeRealtimeSystem() {
   console.log('🚀 Initializing real-time system...');

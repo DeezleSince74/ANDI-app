@@ -9,7 +9,7 @@ The ANDI AI Instructional Coach web application built with Next.js 15, TypeScrip
 - **Styling**: Tailwind CSS v4
 - **UI Components**: ShadCN/UI + Radix UI
 - **Authentication**: Auth.js v5 (NextAuth.js)
-- **Database**: PostgreSQL with Drizzle ORM
+- **Database**: PostgreSQL with SQL-first approach (no ORM)
 - **Build Tool**: Turbopack (development)
 - **Monitoring**: Sentry
 - **State Management**: Zustand (when needed)
@@ -32,9 +32,14 @@ src/
 │   └── dashboard/         # Dashboard components
 ├── lib/                   # Utility functions
 │   └── utils.ts           # Shared utilities
+├── db/                    # Database layer (SQL-first)
+│   ├── schema/            # SQL schema files
+│   ├── repositories/      # Database repositories
+│   ├── types.ts           # TypeScript database types
+│   ├── client.ts          # Database client & utilities
+│   └── migrate.ts         # Migration runner
 ├── server/                # Server-side code
-│   ├── auth/              # NextAuth.js configuration
-│   └── db/                # Database schema and connection
+│   └── auth/              # NextAuth.js configuration
 ├── hooks/                 # Custom React hooks
 ├── types/                 # TypeScript type definitions
 └── env.js                 # Environment variable validation
@@ -73,10 +78,7 @@ src/
 # Install dependencies
 npm install
 
-# Generate database migrations
-npm run db:generate
-
-# Push database schema
+# Run database migrations
 npm run db:migrate
 
 # Start development server with Turbopack
@@ -84,6 +86,47 @@ npm run dev
 ```
 
 The application will be available at `http://localhost:3000`.
+
+## 🗄️ Database Architecture (SQL-First)
+
+### Why SQL-First?
+- **No ORM overhead** - Direct SQL queries for better performance
+- **Type safety** - TypeScript interfaces match database schema exactly
+- **Better debugging** - See actual queries, not ORM abstractions
+- **AI-friendly** - Easier for AI assistants to help with modifications
+- **SQL injection protection** - All queries use parameterized statements
+
+### Database Structure
+```
+src/db/
+├── schema/               # SQL schema files (version controlled)
+│   ├── 001_initial_schema.sql      # Users, auth, profiles
+│   └── 002_recordings_schema.sql   # Recordings, AI, transcripts
+├── repositories/         # Type-safe database operations
+│   └── recordings.ts     # Recording CRUD operations
+├── types.ts             # TypeScript types matching database
+├── client.ts            # PostgreSQL client with utilities
+└── migrate.ts           # Migration runner script
+```
+
+### Usage Examples
+```typescript
+// Import repository functions
+import { getRecordingsByUser, createRecording } from '~/db/repositories/recordings';
+import type { CreateRecordingSession } from '~/db/types';
+
+// Type-safe queries
+const recordings = await getRecordingsByUser(userId);
+
+// Type-safe inserts
+const newRecording: CreateRecordingSession = {
+  sessionId: 'sess_123',
+  userId: 'user_456',
+  title: 'Math Class Recording',
+  status: 'pending'
+};
+await createRecording(newRecording);
+```
 
 ## 🔐 Authentication
 

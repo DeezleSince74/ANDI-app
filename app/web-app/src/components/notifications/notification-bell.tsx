@@ -32,41 +32,7 @@ export interface NotificationBellProps {
   className?: string;
 }
 
-// Mock data for demonstration
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    sessionId: 'sess_1',
-    type: 'processing_complete',
-    title: 'Recording Analysis Complete',
-    message: 'Your recording "Math Review Session" has been processed and analysis is ready to view.',
-    actionUrl: '/recordings/sess_1',
-    isRead: false,
-    priority: 'normal',
-    createdAt: new Date(Date.now() - 5 * 60 * 1000) // 5 minutes ago
-  },
-  {
-    id: '2',
-    sessionId: 'sess_2',
-    type: 'processing_failed',
-    title: 'Recording Processing Failed',
-    message: 'There was an error processing "Science Discussion". Please try uploading again.',
-    actionUrl: '/recordings',
-    isRead: false,
-    priority: 'high',
-    createdAt: new Date(Date.now() - 15 * 60 * 1000) // 15 minutes ago
-  },
-  {
-    id: '3',
-    type: 'analysis_ready',
-    title: 'Weekly Insights Available',
-    message: 'Your weekly classroom insights and trends are ready to explore.',
-    actionUrl: '/insights',
-    isRead: true,
-    priority: 'normal',
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
-  }
-];
+// TODO: Replace with actual notifications API
 
 export function NotificationBell({ userId, onNotificationClick, className = '' }: NotificationBellProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -74,33 +40,33 @@ export function NotificationBell({ userId, onNotificationClick, className = '' }
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching notifications
-    setTimeout(() => {
-      setNotifications(mockNotifications);
-      setLoading(false);
-    }, 500);
-
-    // Set up polling for new notifications
-    const interval = setInterval(() => {
-      // In a real app, this would poll your notifications API
-      // For demo, we'll occasionally add a new notification
-      const shouldAddNotification = Math.random() > 0.95; // 5% chance every 10 seconds
-      if (shouldAddNotification) {
-        const newNotification: Notification = {
-          id: `new_${Date.now()}`,
-          type: 'processing_complete',
-          title: 'New Recording Complete',
-          message: 'A recording has finished processing.',
-          actionUrl: '/recordings',
-          isRead: false,
-          priority: 'normal',
-          createdAt: new Date()
-        };
-        setNotifications(prev => [newNotification, ...prev]);
+    const fetchNotifications = async () => {
+      try {
+        if (!userId) {
+          setLoading(false);
+          return;
+        }
+        
+        // TODO: Replace with actual API call
+        // const response = await fetch(`/api/notifications?userId=${userId}`);
+        // const data = await response.json();
+        // setNotifications(data.notifications || []);
+        
+        // For now, return empty array for debugging
+        setNotifications([]);
+        setLoading(false);
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+        setNotifications([]);
+        setLoading(false);
       }
-    }, 10000);
+    };
 
-    return () => clearInterval(interval);
+    fetchNotifications();
+
+    // TODO: Set up real-time notifications via WebSocket or polling
+    // const interval = setInterval(fetchNotifications, 30000); // Check every 30 seconds
+    // return () => clearInterval(interval);
   }, [userId]);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -204,6 +170,9 @@ export function NotificationBell({ userId, onNotificationClick, className = '' }
               <div className="p-6 text-center text-slate-500">
                 <Bell className="h-8 w-8 mx-auto mb-2 text-slate-300" />
                 <p className="text-sm">No notifications yet</p>
+                <p className="text-xs text-slate-400 mt-2">
+                  Debug: User ID {userId ? 'provided' : 'missing'}
+                </p>
               </div>
             ) : (
               <ScrollArea className="h-96">

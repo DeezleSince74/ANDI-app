@@ -306,7 +306,7 @@ ALTER TABLE recording_sessions ADD COLUMN
 1. **Assembly AI Service** - Direct API integration
 2. **Ollama Service** - HTTP client for local models
 3. **Job Queue** - Bull/BullMQ with Redis backend
-4. **Database Service** - Drizzle ORM integration
+4. **Database Service** - Direct SQL integration with TypeScript types
 
 ### Phase 2: API Routes
 1. **Audio upload endpoint** - File handling + Assembly AI
