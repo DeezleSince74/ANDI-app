@@ -28,11 +28,12 @@ app.prepare().then(() => {
     // Initialize queue workers first (critical for processing)
     try {
       console.log('🚀 [SERVER] Initializing queue workers...');
-      const { initializeQueueWorkers } = await import('./src/lib/queue/startup.ts');
+      const { initializeQueueWorkers } = require('./src/lib/queue/startup.js');
       initializeQueueWorkers();
       console.log('✅ [SERVER] Queue workers initialized successfully');
     } catch (error) {
       console.error('❌ [SERVER] Failed to initialize queue workers:', error);
+      console.error('Error details:', error);
     }
     
     // Initialize real-time system (non-critical) - temporarily disabled

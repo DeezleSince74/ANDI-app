@@ -16,7 +16,7 @@ services:
       - OLLAMA_API_URL=http://andi_ollama_cpu:11434
       - NEXTAUTH_URL=http://localhost:3000
       - NEXTAUTH_SECRET=development-secret-key-please-change-in-production
-      - ASSEMBLY_AI_API_KEY=${ASSEMBLY_AI_API_KEY}
+      - ASSEMBLY_AI_API_KEY=ec3e29e748504340acb9d50e6149ab6b
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - AZURE_CLIENT_ID=placeholder-azure-client-id
