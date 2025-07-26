@@ -23,7 +23,8 @@ ANDI addresses critical educational challenges:
 ## Technical Architecture
 - **Frontend**: Next.js 15, TypeScript, Tailwind CSS, ShadCN UI
 - **Backend**: Node.js with API routes
-- **Database**: PostgreSQL (application data) + ClickHouse (data warehouse)
+- **Database**: PostgreSQL with SQL-first approach (no ORM) for type safety and performance
+- **Data Warehouse**: ClickHouse for analytics
 - **AI Stack**: Assembly AI for transcription, OpenAI/Anthropic/Gemini for insights, Ollama for local LLM processing, RAG for contextualized recommendations
 - **Authentication**: Auth.js v5 (NextAuth) with Google OAuth, Azure Entra ID, Email magic links
 - **Storage**: Cloud storage for media files
@@ -64,6 +65,14 @@ ANDI addresses critical educational challenges:
 - Implement core ANDI features (audio analysis, CIQ framework)
 - Enable GitHub Actions workflow once production environment is ready
 
+## Database Architecture (SQL-First Approach)
+- **No ORM**: Direct SQL queries with type safety through TypeScript interfaces
+- **Repository Pattern**: Clean separation of database logic in `src/db/repositories/`
+- **Type Safety**: Database types defined in `src/db/types.ts` matching PostgreSQL schema exactly
+- **SQL Injection Protection**: All queries use parameterized statements via `pg` library
+- **Schema Management**: SQL files in `src/db/schema/` for version-controlled database structure
+- **Benefits**: Better performance, clearer queries, easier debugging, AI-friendly for modifications
+
 ## Development Guidelines
 - Follow existing code conventions and patterns
 - Prioritize teacher experience and data privacy
@@ -73,6 +82,7 @@ ANDI addresses critical educational challenges:
 - **Use slate color palette for consistent UI design** (Reference: https://ui.shadcn.com/colors)
 - Keep login form at 50% transparency for glass morphism effect
 - Apply ShadCN slate color scheme throughout all components and interfaces
+- **Database queries**: Use the repository pattern in `src/db/repositories/` for all database operations
 
 ## Starting the Application
 - **Use `./start-andi.sh --detached` to start all services properly**

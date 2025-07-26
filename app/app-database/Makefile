@@ -1,7 +1,7 @@
 # ANDI Database Makefile
 # Provides convenient commands for database management
 
-.PHONY: help up down start stop restart logs shell psql backup restore health-check clean reset migrate seed
+.PHONY: help up down start stop restart logs shell psql backup restore health-check clean reset migrate seed sync-web-app check-drift generate-types schema-status
 
 # Default environment file
 ENV_FILE ?= .env
@@ -116,6 +116,70 @@ stats: ## Show database statistics
 		WHERE schemaname IN ('auth', 'core', 'analytics', 'community', 'gamification') \
 		GROUP BY schemaname \
 		ORDER BY schemaname;"
+
+sync-web-app: ## Sync schema changes to web-app
+	@echo "🔄 Syncing schema to web-app..."
+	@./scripts/sync-to-web-app.sh
+
+sync-web-app-dry-run: ## Preview schema sync changes (dry run)
+	@echo "🔍 Preview schema changes..."
+	@./scripts/sync-to-web-app.sh --dry-run
+
+check-drift: ## Check for schema drift between app-database and web-app
+	@echo "🔍 Checking schema drift..."
+	@./scripts/check-schema-drift.sh
+
+check-drift-fix: ## Check and automatically fix schema drift
+	@echo "🔧 Checking and fixing schema drift..."
+	@./scripts/check-schema-drift.sh --fix
+
+generate-types: ## Generate TypeScript types from schema
+	@echo "🔧 Generating TypeScript types..."
+	@node ./scripts/generate-types.js
+
+generate-types-dry-run: ## Preview TypeScript type generation
+	@echo "🔍 Preview TypeScript type generation..."
+	@node ./scripts/generate-types.js --dry-run
+
+schema-status: ## Show comprehensive schema synchronization status
+	@echo "📊 Schema Synchronization Status"
+	@echo "================================="
+	@echo ""
+	@echo "🏗️  App-Database Schema:"
+	@find ./init -name "*.sql" | wc -l | awk '{print "   📄 Schema files: " $$1}'
+	@if [ -d "./migrations/versions" ]; then \
+		find ./migrations/versions -name "*.sql" | wc -l | awk '{print "   🔄 Migrations: " $$1}'; \
+	else \
+		echo "   🔄 Migrations: 0"; \
+	fi
+	@echo ""
+	@echo "🌐 Web-App Schema:"
+	@if [ -d "../web-app/src/db/schema/app-database-schemas" ]; then \
+		find ../web-app/src/db/schema/app-database-schemas -name "*.sql" | wc -l | awk '{print "   📄 Synced files: " $$1}'; \
+	else \
+		echo "   📄 Synced files: 0 (never synced)"; \
+	fi
+	@if [ -f "../web-app/src/db/schema/.schema-checksum" ]; then \
+		echo "   🔒 Last sync: $$(cat ../web-app/src/db/schema/.schema-checksum)"; \
+	else \
+		echo "   🔒 Last sync: Never"; \
+	fi
+	@echo ""
+	@echo "💡 Quick Actions:"
+	@echo "   Sync schema:     make sync-web-app"
+	@echo "   Check drift:     make check-drift"
+	@echo "   Generate types:  make generate-types"
+	@echo "   Full workflow:   make sync-and-generate"
+
+sync-and-generate: ## Complete workflow: sync schema and generate types
+	@echo "🚀 Running complete schema sync workflow..."
+	@make sync-web-app
+	@make generate-types
+	@echo ""
+	@echo "✅ Schema sync and type generation completed!"
+	@echo "Next steps:"
+	@echo "  1. cd ../web-app && npm run db:migrate"
+	@echo "  2. npm run dev"
 
 azure-deploy: ## Deploy database schema to Azure PostgreSQL
 	@echo "Deploying to Azure PostgreSQL..."
